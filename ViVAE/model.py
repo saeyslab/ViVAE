@@ -29,18 +29,18 @@ class ViVAE:
         self,
         input_dim: int,
         latent_dim: int = 2,
-        hidden_dims: List[int] = [100, 100, 100],
-        variational: bool = False,
-        activation = torch.nn.GELU()
+        hidden_dims: List[int] = [32,64,128,32],
+        variational: bool = True,
+        activation = torch.nn.SELU()
     ):
         """ViVAE dimension-reduction model
 
         Args:
             input_dim (int): Dimension of input data.
             latent_dim (int, optional): Dimension of latent space. Defaults to 2.
-            hidden_dims (List[int], optional): Dimensions of hidden layers (order for encoder; decoder takes reverse). Defaults to [100, 100, 100].
+            hidden_dims (List[int], optional): Dimensions of hidden layers (order for encoder; decoder takes reverse). Defaults to [32,64,128,32].
             variational (bool, optional): Whether to use a VAE with isotropic Gaussian latent prior. Defaults to False.
-            activation (optional): Activation function (instantiated `torch` module). Defaults to `torch.nn.GELU()`.
+            activation (optional): Activation function (instantiated `torch` module). Defaults to `torch.nn.GSLU()`.
         """
         self.net = Autoencoder(
             input_dim=input_dim, latent_dim=latent_dim, hidden_dims=hidden_dims,
@@ -67,8 +67,8 @@ class ViVAE:
         lam_kldiv: float = 1.,
         lam_geom: float = 0.,
         lam_egeom: float = 0.,
-        lam_mds: float = 1.,
-        mds_nsamp: int = 1
+        lam_mds: float = 10.,
+        mds_nsamp: int = 4
     ) -> Dict:
         """Train for one epoch
 
@@ -77,8 +77,8 @@ class ViVAE:
             lam_kldiv (float, optional): Weight of KL divergence from latent prior. Defaults to 1.
             lam_geom (float, optional): Weight of geometric loss term. Defaults to 0.
             lam_egeom (float, optional): Weight of encoder-geometric loss term. Defaults to 0.
-            lam_mds (float, optional): Weight of MDS loss term. Defaults to 0.
-            mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 1.
+            lam_mds (float, optional): Weight of MDS loss term. Defaults to 10.
+            mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 4.
 
         Returns:
             Dict: Losses.
@@ -136,14 +136,14 @@ class ViVAE:
         X: np.ndarray,
         n_epochs: int = 50,
         batch_size: int = 256,
-        learning_rate: float = 1e-4,
-        weight_decay: float = 1e-5,
+        learning_rate: float = 1e-3,
+        weight_decay: float = 1e-4,
         lam_recon: float = 1.,
         lam_kldiv: float = 1.,
         lam_geom: float = 0.,
         lam_egeom: float = 0.,
-        lam_mds: float = 0.,
-        mds_nsamp: int = 1,
+        lam_mds: float = 10.,
+        mds_nsamp: int = 4,
         verbose: bool = True
     ):
         """Fit model to data
@@ -152,14 +152,14 @@ class ViVAE:
             X (np.ndarray): Input data coordinates.
             n_epochs (int, optional): Number of training epochs. Defaults to 50.
             batch_size (int, optional): Number of points in each training mini-batch. Defaults to 256.
-            learning_rate (float, optional): Adam optimiser learning rate. Defaults to 1e-4.
-            weight_decay (float, optional): Adam optimiser weight decay rate. Defaults to 1e-5.
+            learning_rate (float, optional): Adam optimiser learning rate. Defaults to 1e-3.
+            weight_decay (float, optional): Adam optimiser weight decay rate. Defaults to 1e-4.
             lam_recon (float, optional): Weight of reconstruction loss term. Defaults to 1.
             lam_kldiv (float, optional): Weight of KL divergence from latent prior. Defaults to 1.
             lam_geom (float, optional): Weight of geometric loss term. Defaults to 0.
             lam_egeom (float, optional): Weight of encoder-geometric loss term. Defaults to 0.
-            lam_mds (float, optional): Weight of MDS loss term. Defaults to 0.
-            mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 5.
+            lam_mds (float, optional): Weight of MDS loss term. Defaults to 10.
+            mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 4.
             verbose (bool, optional): Whether to print training progress info. Defaults to True.
         """
         
@@ -212,14 +212,14 @@ class ViVAE:
         X: np.ndarray,
         n_epochs: int = 50,
         batch_size: int = 256,
-        learning_rate: float = 1e-4,
-        weight_decay: float = 1e-5,
+        learning_rate: float = 1e-3,
+        weight_decay: float = 1e-4,
         lam_recon: float = 1.,
         lam_kldiv: float = 1.,
         lam_geom: float = 0.,
         lam_egeom: float = 0.,
-        lam_mds: float = 0.,
-        mds_nsamp: int = 1,
+        lam_mds: float = 10.,
+        mds_nsamp: int = 4,
         verbose: bool = True
     ):
         """Fit model to data and transform data
@@ -228,14 +228,14 @@ class ViVAE:
             X (np.ndarray): Input data coordinates.
             n_epochs (int, optional): Number of training epochs. Defaults to 50.
             batch_size (int, optional): Number of points in each training and transform mini-batch. Defaults to 256.
-            learning_rate (float, optional): Adam optimiser learning rate. Defaults to 1e-4.
-            weight_decay (float, optional): Adam optimiser weight decay rate. Defaults to 1e-5.
+            learning_rate (float, optional): Adam optimiser learning rate. Defaults to 1e-3.
+            weight_decay (float, optional): Adam optimiser weight decay rate. Defaults to 1e-4.
             lam_recon (float, optional): Weight of reconstruction loss term. Defaults to 1.
             lam_kldiv (float, optional): Weight of KL divergence from latent prior. Defaults to 1.
             lam_geom (float, optional): Weight of geometric loss term. Defaults to 0.
             lam_egeom (float, optional): Weight of encoder-geometric loss term. Defaults to 0.
-            lam_mds (float, optional): Weight of MDS loss term. Defaults to 0.
-            mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 5.
+            lam_mds (float, optional): Weight of MDS loss term. Defaults to 10.
+            mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 4.
             verbose (bool, optional): Whether to print training progress info. Defaults to True.
         """
         self.fit(
