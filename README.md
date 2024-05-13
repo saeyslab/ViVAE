@@ -7,6 +7,7 @@ ViVAE is a toolkit for single-cell data denoising and dimensionality reduction.
 **It is published together with [ViScore](https://github.com/saeyslab/ViScore), a collection of tools for evaluation of dimensionality reduction.**
 
 Our [pre-print](https://www.biorxiv.org/content/10.1101/2023.11.23.568428v2) uses an [older version](https://github.com/saeyslab/ViVAE_old) of ViVAE.
+We are heavily re-working the pre-print right now!
 
 ## Installation
 
@@ -40,10 +41,17 @@ python -c "import torch; print(torch.backends.mps.is_available())"
 
 This will print either `True` or `False`.
 
+## Example
+
+While ViVAE is primarily tailored toward scRNA-seq data, its use extends to cytometry, particularly for trajectory inference and outlier population detection.
+We provide a Jupyter notebook (`example_cytometry.ipynb`) showing an application to a mass cytometry (CyTOF) dataset.
+
+(Look [here](https://docs.jupyter.org/en/latest/install/notebook-classic.html) if you are interested in how to use Jupyter notebooks.)
+
 ## Pre-print
 
 The pre-print of our publication is available [here](https://www.biorxiv.org/content/10.1101/2023.11.23.568428v2) on bioRxiv.
 
 It describes underlying methodology of ViVAE and ViScore, reviews past work in dimensionality reduction and evaluation of it and links to publicly available datasets on which performance of ViVAE was evaluated.
 
-The pre-print uses the old version of *ViVAE*, [here](https://github.com/saeyslab/ViVAE_old).
+The pre-print uses the old version of *ViVAE*, available [here](https://github.com/saeyslab/ViVAE_old).
