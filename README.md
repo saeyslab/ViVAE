@@ -41,7 +41,14 @@ python -c "import torch; print(torch.backends.mps.is_available())"
 
 This will print either `True` or `False`.
 
-## Example
+## Example on scRNA-seq data
+
+To get users started quickly, we provide a tutorial on dimensionality reduction of scRNA-seq data using ViVAE [here](https://colab.research.google.com/drive/1Ys9fpg8t4rhfmGHUVuX2JPdxQHfongpB?usp=sharing).
+This can be run locally or remotely on the cloud (using Google Colab).
+
+This tutorial includes standard data pre-processing, dimensionality reduction, plotting of results and diagnostics and objective evaluation of structure-preservation criteria.
+
+## Example on cytometry data
 
 While ViVAE is primarily tailored toward scRNA-seq data, its use extends to cytometry, particularly for trajectory inference and outlier population detection.
 We provide a Jupyter notebook (`example_cytometry.ipynb`) showing an application to a mass cytometry (CyTOF) dataset.
