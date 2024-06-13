@@ -69,7 +69,7 @@ class MDSLoss():
     """Stochastic quartet MDS loss
     """
     @staticmethod
-    def distance(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def euclidean_distance(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         """Euclidean distance
 
         Args:
@@ -83,7 +83,21 @@ class MDSLoss():
         return res
 
     @staticmethod
-    def quartet_norm_dist(x: List[torch.Tensor], z: List[torch.Tensor], i: int, j: int, xd: torch.Tensor, zd: torch.Tensor) -> torch.Tensor:
+    def cosine_distance(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        """Cosine distance
+
+        Args:
+            x (torch.Tensor): Row-wise coordinates (batch).
+            y (torch.Tensor): Row-wise coordinates (batch).
+
+        Returns:
+            torch.Tensor: Euclidean distance (L2) norm.
+        """
+        res = 1.-torch.nn.functional.cosine_similarity(x, y, dim=1)
+        return res
+
+    @staticmethod
+    def quartet_norm_dist(x: List[torch.Tensor], z: List[torch.Tensor], i: int, j: int, xd: torch.Tensor, zd: torch.Tensor, distf) -> torch.Tensor:
         """Quartet-normalised distance
 
         Args:
@@ -93,50 +107,52 @@ class MDSLoss():
             j (int): Second point index across quartets.
             xd (torch.Tensor): Denominator (normaliser) for `x`.
             zd (torch.Tensor): Denominator (normaliser) for `z`.
+            distf: Distance function (static method of `MDSLoss`).
 
         Returns:
             torch.Tensor: Quartet-normalised distances.
         """
-        f = MDSLoss.distance
+        f = distf
         dx = f(x[i], x[j]) / xd
         dz = f(z[i], z[j]) / zd
         D = torch.pow(dx-dz, 2.)
         return D
     
     @staticmethod
-    def quartet_norm_factor(x: List[torch.Tensor]):
+    def quartet_norm_factor(x: List[torch.Tensor], distf):
         """Quartet normalisation factor
 
         Args:
             x (List[torch.Tensor]): Points of indices 1-4 in their respective quartets.
+            distf: Distance function (static method of `MDSLoss`).
 
         Returns:
             torch.Tensor: Normalisation factors.
         """
-        f = MDSLoss.distance
+        f = distf
         res = f(x[0],x[1])+f(x[1],x[2])+f(x[2],x[3])+f(x[0],x[2])+f(x[0],x[3])+f(x[1],x[3])
         return res
 
     @staticmethod
-    def quartet_cost(xq: List[torch.Tensor], zq: List[torch.Tensor]) -> torch.Tensor:
+    def quartet_cost(xq: List[torch.Tensor], zq: List[torch.Tensor], distf) -> torch.Tensor:
         """Quartet cost
 
         Args:
             xq (List[torch.Tensor]): Input points of indices 1-4 in their respective quartets.
             zq (List[torch.Tensor]): Embeddings of `x`.
+            distf: Distance function (static method of `MDSLoss`).
 
         Returns:
             torch.Tensor: Quartet costs, given by distortion of quartet-normalised distances.
         """
-        xd = MDSLoss.quartet_norm_factor(xq)
-        zd = MDSLoss.quartet_norm_factor(zq)
+        xd = MDSLoss.quartet_norm_factor(x=xq, distf=distf)
+        zd = MDSLoss.quartet_norm_factor(x=zq, distf=distf)
         def d(i, j):
-            return MDSLoss.quartet_norm_dist(x=xq, z=zq, i=i, j=j, xd=xd, zd=zd)
+            return MDSLoss.quartet_norm_dist(x=xq, z=zq, i=i, j=j, xd=xd, zd=zd, distf=distf)
         res = torch.mean(d(0,1)+d(1,2)+d(2,3)+d(0,2)+d(0,3)+d(1,3))
         return res
 
-
-    def __call__(self, x: torch.Tensor, z: torch.Tensor, n_sampling: int = 1) -> torch.Tensor:
+    def __call__(self, x: torch.Tensor, z: torch.Tensor, distf: str = 'euclidean', n_sampling: int = 1) -> torch.Tensor:
         """Stochastic quartet MDS loss
 
         Penalises change in relative positions of points within random groups of 4 (from SQuadMDS).
@@ -144,6 +160,7 @@ class MDSLoss():
         Args:
             x (torch.Tensor): Input.
             z (torch.Tensor): Encoding.
+            distf (str, optional): Distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             n_sampling (int, optional): How many times groups are (re-)sampled. Defaults to 1.
         Returns:
             torch.Tensor: Averaged group cost.
@@ -152,6 +169,13 @@ class MDSLoss():
         n = x.shape[0]
         nq = n//4
         
+        if distf=='euclidean':
+            distf = MDSLoss.euclidean_distance
+        elif distf=='cosine':
+            distf = MDSLoss.cosine_distance
+        else:
+            raise ValueError('Invalid distance function specification for MDS loss')
+
         loss = torch.FloatTensor([0.])
 
         for _ in range(n_sampling):
@@ -161,7 +185,7 @@ class MDSLoss():
             xq = [x[np.arange(idx, idx+nq)] for idx in idcs]
             zq = [z[np.arange(idx, idx+nq)] for idx in idcs]
 
-            res = torch.multiply(MDSLoss.quartet_cost(xq, zq), n)
+            res = torch.multiply(MDSLoss.quartet_cost(xq=xq, zq=zq, distf=distf), n)
             res = torch.divide(res, nq)
             loss += res
         

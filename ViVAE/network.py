@@ -160,6 +160,7 @@ class Autoencoder(nn.Module):
             lam_geom: float = 0.,
             lam_egeom: float = 0.,
             lam_mds: float = 0.,
+            mds_distf: str = 'euclidean',
             mds_nsamp: int = 5
         ) -> Dict:
         """Run forward pass
@@ -171,6 +172,7 @@ class Autoencoder(nn.Module):
             lam_geom (float, optional): Weight of geometric loss term. Defaults to 0.
             lam_egeom (float, optional): Weight of encoder-geometric loss term. Defaults to 0.
             lam_mds (float, optional): Weight of MDS loss term. Defaults to 0.
+            mds_distf (str, optional): Distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 5.
         
         Returns:
@@ -194,7 +196,7 @@ class Autoencoder(nn.Module):
         if lam_egeom>0.:
             l_egeom = lam_egeom*self.encoder_geometric_error(self.submersion, x)
         if lam_mds>0.:
-            l_mds = lam_mds*self.mds_error(x, z, n_sampling=mds_nsamp)
+            l_mds = lam_mds*self.mds_error(x, z, distf=mds_distf, n_sampling=mds_nsamp)
         return {'recon': l_recon, 'kldiv': l_kldiv, 'geom': l_geom, 'egeom': l_egeom, 'mds': l_mds}
     
     def embed(self, x: Union[np.ndarray, torch.Tensor], batch_size: Optional[int] = 256) -> np.ndarray:
