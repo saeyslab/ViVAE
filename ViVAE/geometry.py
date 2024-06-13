@@ -41,14 +41,14 @@ from matplotlib.collections import PatchCollection
 from matplotlib.patches import Polygon
 
 def jacobian(f: Callable, x: torch.Tensor) -> torch.Tensor:
-    """Compute Jacobian matrix
+    """Compute Jacobian matrices
 
     Args:
         f (Callable): Immersion function.
         x (torch.Tensor): Input to `f`.
 
     Returns:
-        torch.Tensor: Jacobian.
+        torch.Tensor: Jacobian matrices.
     """
     try:
         jac = torch.func.vmap(torch.func.jacfwd(f), in_dims=(0,))(x)
@@ -136,6 +136,7 @@ class EncoderIndicatome():
         """Circle on 2-manifold
 
         Constructs a circle of radius `r` on 2-manifold embedded in (possibly higher-dimensional) ambient space.
+        (More accurately, this is a 2-dimensional circular disc, if the ambient space is higher-dimensional.)
         Samples `n` points from the circumference to approximate it as a polygon.
         Tangent vectors `t1` and `t2` define the 2-manifold.
 
@@ -176,13 +177,14 @@ class EncoderIndicatome():
         res = origin+vecs
         return res
 
-    def compute_indicatrices(self, r: float = 1e-3, batch_size: int = 256, n_steps: int = 20, n_polygon: int = 100):
-        """Compute decoder indicatrices
+    def compute_indicatrices(self, r: float = 1e-3, batch_size: int = 256, n_steps: int = 20, all_points: bool = False, n_polygon: int = 100):
+        """Compute encoder indicatrices
 
         Args:
             r (float, optional): Hypersphere radius in ambient space. Defaults ot 1e-3.
             batch_size (int, optional): Batch size for forward pass of `self.x` through `self.model`. Defaults to 256.
             n_steps (int, optional): Number of steps along each axis of latent representation to generate grid of indicatrices. Defaults to 20.
+            all_points (bool, optional): Overrides `n_steps` and uses all points, instead of grid-sampling. Can be computationally intensive. Defaults to False.
             n_polygon (int, optional): Number of points in each polygon approximating the unit sphere in pullback metric. Defaults to 100.
         """
 
@@ -205,23 +207,25 @@ class EncoderIndicatome():
         ## Extract gridpoints from embedding
         xmin, xmax = torch.min(self.act[:,0]).item(), torch.max(self.act[:,0]).item()
         ymin, ymax = torch.min(self.act[:,1]).item(), torch.max(self.act[:,1]).item()
-        nsteps_x = n_steps
-        nsteps_y = math.ceil((ymax-ymin)/(xmax-xmin)*nsteps_x)
-        stepsize_x = (xmax-xmin)/(nsteps_x)
-        stepsize_y = (ymax-ymin)/(nsteps_y)
-        stepsize = min(stepsize_x, stepsize_y)
-        xs = torch.linspace(xmin, xmax, steps=nsteps_x)
-        ys = torch.linspace(ymin, ymax, steps=nsteps_y)
-        idcs = EncoderIndicatome.gridpoint_idcs(ref=self.act, xgrid=xs, ygrid=ys)
-        
-        self.stepsize = stepsize
+        if not all_points:
+            nsteps_x = n_steps
+            nsteps_y = math.ceil((ymax-ymin)/(xmax-xmin)*nsteps_x)
+            stepsize_x = (xmax-xmin)/(nsteps_x)
+            stepsize_y = (ymax-ymin)/(nsteps_y)
+            stepsize = min(stepsize_x, stepsize_y)
+            self.stepsize = stepsize
+            xs = torch.linspace(xmin, xmax, steps=nsteps_x)
+            ys = torch.linspace(ymin, ymax, steps=nsteps_y)
+            idcs = EncoderIndicatome.gridpoint_idcs(ref=self.act, xgrid=xs, ygrid=ys)
+        else:
+            idcs = np.arange(0, self.act.shape[0], 1)
 
         ## Trace back to ambient space
         xr = self.x[idcs]
         zr = self.model.submersion(xr)
         self.zr = zr
 
-        ## Compute Jacobian
+        ## Compute Jacobians
         jac = torch.func.vmap(torch.func.jacfwd(self.model.submersion), in_dims=(0,))(xr)
 
         ## Find horizontal tangents

@@ -277,6 +277,7 @@ class ViVAE:
         batch_size: int = 256,
         radius: float = 1e-4,
         n_steps: int = 50,
+        all_points: bool = False,
         n_polygon: int = 100
     ) -> EncoderIndicatome:
         """Compute encoder indicatrices
@@ -287,6 +288,7 @@ class ViVAE:
             batch_size (int, optional): Batch size for forward pass of `X` through model. Defaults to 256.
             radius (float, optional): Hypersphere radius in ambient space. Defaults ot 1e-4.
             n_steps (int, optional): Number of steps along each axis of latent representation to generate grid of indicatrices. Defaults to 50.
+            all_points (bool, optional): Overrides `n_steps` and uses all points. Computationally intensive. Do not do this unless completely sure. Defaults to False.
             n_polygon (int, optional): Number of points in each polygon approximating the hypersphere in ambient space. Defaults to 100.
 
         Returns:
@@ -294,7 +296,7 @@ class ViVAE:
         """
         return encoder_indicatrices(
             model=self.net, x=X, batch_size=batch_size, radius=radius, n_steps=n_steps,
-            n_polygon=n_polygon
+            all_points=all_points, n_polygon=n_polygon
         )
     
     def decoder_indicatrices(
