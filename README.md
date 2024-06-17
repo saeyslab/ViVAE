@@ -21,6 +21,7 @@ On Windows, use Anaconda Prompt.
 conda create --name ViVAE python=3.11.7 \
     numpy==1.26.3 numba==0.59.0 pandas==2.2.0 matplotlib==3.8.2 scipy==1.12.0 pynndescent==0.5.11 scikit-learn==1.4.0 scanpy==1.9.8 pytorch==2.1.2
 conda activate ViVAE
+pip install git+https://github.com/saeyslab/FlowSOM_Python.git@80529c6b7a1747e8e71042102ac8762c3bfbaa1b
 pip install --upgrade git+https://github.com/saeyslab/ViVAE.git
 ```
 
