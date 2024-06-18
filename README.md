@@ -44,7 +44,7 @@ This will print either `True` or `False`.
 
 ## Example on scRNA-seq data
 
-To get users started quickly, we provide a tutorial on dimensionality reduction of scRNA-seq data using ViVAE [here](https://colab.research.google.com/drive/1Ys9fpg8t4rhfmGHUVuX2JPdxQHfongpB?usp=sharing).
+To get users started quickly, we provide a tutorial on dimensionality reduction of scRNA-seq data using ViVAE [here](https://colab.research.google.com/drive/163qmAKIc9CcpWSJQzo47OwIUlt9QPzE2?usp=sharing).
 This can be run locally or remotely on the cloud (using Google Colab).
 
 This tutorial includes standard data pre-processing, dimensionality reduction, plotting of results and diagnostics and objective evaluation of structure-preservation criteria.
