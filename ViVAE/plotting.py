@@ -71,9 +71,10 @@ def plot_embedding(
     s: float = 0.05,
     equal_axis_scales: bool = True,
     fsom: Optional[fs.main.FlowSOM] = None,
+    fsom_background_alpha: float = 0.35,
     fsom_show_nodes: bool = True,
     fsom_view: Optional[str] = 'labels',
-    fsom_markers: Optional[Union[str, List]] = None,
+    fsom_markers: Optional[List] = None,
     fsom_node_scale: float = 0.003,
     fsom_edge_scale: float = 0.8,
     fsom_text_size: float = 6.,
@@ -120,8 +121,9 @@ def plot_embedding(
         s (float, optional): Point size. Defaults to 0.05.
         equal_axis_scales (bool, optional): Whether x-axis and y-axis should use the same scale. Defaults to True.
         fsom (flowsom.main.FlowSOM, optional): FlowSOM model trained on input high-dimensional data. Defaults to None.
+        fsom_background_alpha (float, optional): Opacity of embedding points if FlowSOM tree is plotted over them. Deafults to 0.35.
         fsom_view (str, optional): One of 'labels', 'markers', 'clusters', 'metaclusters' or None for FlowSOM tree view mode. Defaults to 'labels'.
-        fsom_markers (str or List, optional): One or more markers (or channels or feature indices) in the FlowSOM model to plot cluster-wise intensities for, instead of population proportions. Defaults to None.
+        fsom_markers (List, optional): One or more markers (or channels or feature indices) in the FlowSOM model to plot cluster-wise intensities for, instead of population proportions. Defaults to None.
         fsom_show_nodes (bool, optional): Whether to show nodes of FlowSOM tree. Defaults to True (unless no labels or markers are specified).
         fsom_node_scale (float, optional): Scaling factor for size of FlowSOM tree nodes. Defaults to 0.003.
         fsom_edge_scale (float, optional): Scaling factor for size of FlowSOM tree edges. Defaults to 0.8
@@ -135,7 +137,7 @@ def plot_embedding(
 
     draw_mst = fsom is not None and dr_model is not None
     if draw_mst:
-        alpha = .35
+        alpha = fsom_background_alpha
     else:
         alpha = 1.
 
@@ -203,7 +205,7 @@ def plot_embedding(
         mst = mc.LineCollection(e)
         mst.set_edgecolor('black')
         mst.set_linewidth(fsom_edge_scale)
-        mst.set_zorder(0)
+        #mst.set_zorder(0)
         ax.add_collection(mst)
         if fsom_show_nodes:
             # Add FlowSOM tree nodes
@@ -212,15 +214,19 @@ def plot_embedding(
             if fsom_markers is not None and not isinstance(fsom_markers, list):
                 fsom_markers = list(fsom_markers)
 
-            if fsom_view=='markers' and fsom_markers is not None and len(fsom_markers)==1:
-                cmap = mpl.colormaps['viridis']
-                n = mc.PatchCollection(nodes, cmap=cmap)
+            if fsom_view=='markers' and fsom_markers is not None:
+                if len(fsom_markers)==1:
+                    cmap = mpl.colormaps['viridis']
+                    n = mc.PatchCollection(nodes, cmap=cmap)
+                elif len(fsom_markers)>1:
+                    cmap = fs.pl._plot_helper_functions.FlowSOM_colors()
+                    n = mc.PatchCollection(nodes, cmap=cmap)
             else:
                 n = mc.PatchCollection(nodes)
             n.set_facecolor(['#C7C7C7' if tf else '#FFFFFF' for tf in cluster_empty])
             n.set_edgecolor('black')
             n.set_linewidth(fsom_edge_scale/1.5)
-            n.set_zorder(2)
+            n.set_zorder(3)
             ax.add_collection(n)
             if fsom_view=='labels' and labels is not None:
                 ## Set up colour palette for nodes
@@ -287,24 +293,26 @@ def plot_embedding(
                     n.set_clim(lim)
                     n.set_edgecolor('black')
                     n.set_linewidth(fsom_edge_scale/4.)
-                    n.set_zorder(2)
+                    n.set_zorder(3)
                     ax.add_collection(n)
 
                     ax, fig = fs.pl._plot_helper_functions.add_legend(
-                        fig=fig, ax=ax, data=variable, title=fsom_markers[0], location='upper left', bbox_to_anchor=(0.5, 0.5), cmap=cmap, categorical=False
+                        fig=fig, ax=ax, data=variable, title=fsom_markers[0], location='upper left',
+                        bbox_to_anchor=(0.5, 0.5), cmap=cmap, categorical=False
                     )
 
                 else:
                     fig, ax = fs.pl._plot_helper_functions.plot_star_legend(
                         fig, ax, pretty_markers,
                         coords=(max_x, max_y),
+                        cmap=cmap,
                         max_star_height=np.max(node_sizes)*3.,
                         star_height=1.,
                     )
                     
                     data = fsom.get_cluster_data()[:, markers].X
                     heights = fs.pl._plot_helper_functions.scale_star_heights(data, node_sizes)
-                    s = mc.PatchCollection(fs.pl._plot_helper_functions.add_stars(layout, heights))
+                    s = mc.PatchCollection(fs.pl._plot_helper_functions.add_stars(layout, heights), cmap=cmap)
                     s.set_array(range(data.shape[1]))
                     s.set_edgecolor('black')
                     s.set_linewidth(fsom_edge_scale/4.)
@@ -315,7 +323,7 @@ def plot_embedding(
                 if fsom_view=='clusters':
                     numbers = np.arange(1, fsom.get_cell_data().uns['n_nodes']+1)
                 elif fsom_view=='metaclusters':
-                    numbers = np.asarray(fsom.get_cluster_data().obs['metaclustering'], dtype=int)
+                    numbers = np.asarray(fsom.get_cluster_data().obs['metaclustering']+1, dtype=int)
                 ax = fs.pl._plot_helper_functions.add_text(ax, layout, numbers, text_size=fsom_text_size, text_color='black', ha=['center'])
 
                 
