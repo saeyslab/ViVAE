@@ -129,13 +129,13 @@ def plot_embedding(
         fsom_edge_scale (float, optional): Scaling factor for size of FlowSOM tree edges. Defaults to 0.8
         fsom_text_size (float, optional): Text size if `fsom_view` is 'clusters' or 'metaclusters'. Defaults to 6.
         fsom_plot_unassigned (bool, optional): Whether FlowSOM tree nodes should show proportions of unassigned cells. Defaults to False.
-        dr_model (optional): Dimension-reduction model with a `.transform` method that generated `embedding`. Needed if `fsom` is specified. Defaults to None.
+        dr_model (optional): Dimension-reduction model with a `.transform` method that generated `embedding`. To be provided if `fsom` is specified and the FlowSOM model was trained on the original (high-dimensional) data. Defaults to None.
         palette (List, optional): Custom hex-code colour palette for `labels`.
         figsize (Tuple, optional): Size of figure to display. Defaults to (6,6).
     """
     fig, ax = plt.subplots(figsize=figsize)
 
-    draw_mst = fsom is not None and dr_model is not None
+    draw_mst = fsom is not None
     if draw_mst:
         alpha = fsom_background_alpha
     else:
@@ -190,7 +190,10 @@ def plot_embedding(
         node_sizes[cluster_empty] = min([0.05, node_sizes.max()])
         ## Get embedding of cluster centroids
         centroids = fsom.get_cluster_data().obsm['codes']
-        layout    = dr_model.transform(centroids)
+        if dr_model is not None:
+            layout = dr_model.transform(centroids)
+        else:
+            layout = centroids[:,range(2)]
         # Add FlowSOM tree edges
         edge_list = fsom.get_cluster_data().uns['graph'].get_edgelist()
         segment_plot = [
