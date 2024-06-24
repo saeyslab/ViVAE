@@ -1,18 +1,23 @@
 # ViVAE
 
-*[David Novak](https://github.com/davnovak), Cyril de Bodt, Pierre Lambert, John A. Lee, Sofie Van Gassen, Yvan Saeys*
-
 ViVAE is a toolkit for single-cell data denoising and dimensionality reduction.
 
-**It is published together with [ViScore](https://github.com/saeyslab/ViScore), a collection of tools for evaluation of dimensionality reduction.**
-
+It is published together with **[ViScore](https://github.com/saeyslab/ViScore)**, a collection of tools for evaluation of dimensionality reduction.
 Our [pre-print](https://www.biorxiv.org/content/10.1101/2023.11.23.568428v2) uses an [older version](https://github.com/saeyslab/ViVAE_old) of ViVAE.
 We are heavily re-working the pre-print right now!
+
+## Why use ViVAE
+
+* ViVAE strikes a favourable balance between local and global structure preservation.
+    * This is especially good for data with trajectories, outlier populations or suspected batch effects.
+* ViVAE implements encoder indicatrices: a tool to measure local distortions of latent space.
+* ViVAE integrates with [FlowSOM](https://github.com/saeyslab/FlowSOM_Python) for visualisation.
+* ViVAE is a parametric model, enabling transfer learning and embedding of new points.
 
 ## Installation
 
 ViVAE is a Python package based on PyTorch.
-We recommend creating a new Anaconda environment for ViVAE.
+We recommend creating a new Anaconda environment for it.
 
 On Linux or macOS, use the command line for installation.
 On Windows, use Anaconda Prompt.
@@ -42,24 +47,30 @@ python -c "import torch; print(torch.backends.mps.is_available())"
 
 This will print either `True` or `False`.
 
-## Example on scRNA-seq data
+## Tutorials
 
-To get users started quickly, we provide a tutorial on dimensionality reduction of scRNA-seq data using ViVAE [here](https://colab.research.google.com/drive/163qmAKIc9CcpWSJQzo47OwIUlt9QPzE2?usp=sharing).
-This can be run locally or remotely on the cloud (using Google Colab).
+We provide tutorials on using ViVAE with cytometry data ([here](https://github.com/saeyslab/ViVAE/blob/main/example_cytometry.ipynb)) and with scRNA-seq data ([here](https://colab.research.google.com/drive/1eNpgH_TzbCSu-_4ZPmK7tk6It4BYK5sh?usp=sharing)).
 
-This tutorial includes standard data pre-processing, dimensionality reduction, plotting of results and diagnostics and objective evaluation of structure-preservation criteria.
+In these tutorials we cover
 
-## Example on cytometry data
+* import of input files
+* standard pre-processing
+* dimensionality reduction and its hyperparameters
+* integration of ViVAE with FlowSOM
+* encoder indicatrices for distortion detection
+* evaluation of structure preservation with [ViScore](https://github.com/saeyslab/ViScore)
+* saving and loading trained ViVAE models
 
-While ViVAE is primarily tailored toward scRNA-seq data, its use extends to cytometry, particularly for trajectory inference and outlier population detection.
-We provide a Jupyter notebook (`example_cytometry.ipynb`) showing an application to a mass cytometry (CyTOF) dataset.
+## Benchmarking
 
-(Look [here](https://docs.jupyter.org/en/latest/install/notebook-classic.html) if you are interested in how to use Jupyter notebooks.)
+We benchmark ViVAE in terms of local and global structure preservation, using [ViScore](https://github.com/saeyslab/ViScore).
+The [ViScore](https://github.com/saeyslab/ViScore) repository contains our documented [benchmarking set-up](https://github.com/saeyslab/ViScore/blob/main/benchmarking), which can be extended to other datasets and DR methods.
 
 ## Pre-print
 
 The pre-print of our publication is available [here](https://www.biorxiv.org/content/10.1101/2023.11.23.568428v2) on bioRxiv.
 
 It describes underlying methodology of ViVAE and ViScore, reviews past work in dimensionality reduction and evaluation of it and links to publicly available datasets on which performance of ViVAE was evaluated.
+**We are heavily revising this pre-print.**
 
-The pre-print uses the old version of *ViVAE*, available [here](https://github.com/saeyslab/ViVAE_old).
+The pre-print currently uses the old version of *ViVAE*, available [here](https://github.com/saeyslab/ViVAE_old).
