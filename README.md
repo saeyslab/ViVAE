@@ -59,6 +59,7 @@ In these tutorials we cover
 * integration of ViVAE with FlowSOM
 * encoder indicatrices for distortion detection
 * evaluation of structure preservation with [ViScore](https://github.com/saeyslab/ViScore)
+* evaluation of distortions of annotated populations with ViScore
 * saving and loading trained ViVAE models
 
 ## Benchmarking
