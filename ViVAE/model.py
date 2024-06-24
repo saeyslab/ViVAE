@@ -31,7 +31,8 @@ class ViVAE:
         latent_dim: int = 2,
         hidden_dims: List[int] = [32,64,128,32],
         variational: bool = True,
-        activation = torch.nn.SELU()
+        activation = torch.nn.GELU(),
+        random_state: Optional[int] = None
     ):
         """ViVAE dimension-reduction model
 
@@ -40,7 +41,8 @@ class ViVAE:
             latent_dim (int, optional): Dimension of latent space. Defaults to 2.
             hidden_dims (List[int], optional): Dimensions of hidden layers (order for encoder; decoder takes reverse). Defaults to [32,64,128,32].
             variational (bool, optional): Whether to use a VAE with isotropic Gaussian latent prior. Defaults to False.
-            activation (optional): Activation function (instantiated `torch` module). Defaults to `torch.nn.GSLU()`.
+            activation (optional): Activation function (instantiated `torch` module). Defaults to `torch.nn.GELU()`.
+            random_state (int, optional): Random state to use for reproducibility.
         """
         self.net = Autoencoder(
             input_dim=input_dim, latent_dim=latent_dim, hidden_dims=hidden_dims,
@@ -51,7 +53,9 @@ class ViVAE:
 
         self.trained = False
         self.decoder_active = False
-    
+
+        self.random_state = random_state
+
     def __repr__(self):
         return f'ViVAE(input_dim={self.net.input_dim}, latent_dim={self.net.latent_dim})'
     
@@ -173,6 +177,10 @@ class ViVAE:
 
         if lam_geom>0. and lam_recon==0.:
             raise ValueError('Decoder geometric loss can only be used if reconstruction loss is used')
+
+        if self.random_state is not None:
+            np.random.seed(self.random_state)
+            torch.manual_seed(self.random_state)
 
         self.data_loader = DataLoader(
             TensorDataset(torch.Tensor(X)),
