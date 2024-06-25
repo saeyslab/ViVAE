@@ -71,7 +71,7 @@ class ViVAE:
         lam_kldiv: float = 1.,
         lam_geom: float = 0.,
         lam_egeom: float = 0.,
-        lam_mds: float = 10.,
+        lam_mds: float = 100.,
         mds_distf: str = 'euclidean',
         mds_nsamp: int = 4
     ) -> Dict:
@@ -82,7 +82,7 @@ class ViVAE:
             lam_kldiv (float, optional): Weight of KL divergence from latent prior. Defaults to 1.
             lam_geom (float, optional): Weight of geometric loss term. Defaults to 0.
             lam_egeom (float, optional): Weight of encoder-geometric loss term. Defaults to 0.
-            lam_mds (float, optional): Weight of MDS loss term. Defaults to 10.
+            lam_mds (float, optional): Weight of MDS loss term. (We recommend 100 for scRNA-seq data and 10 for cytometry data.) Defaults to 100.
             mds_distf (str, optional): Distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 4.
 
@@ -149,7 +149,7 @@ class ViVAE:
         lam_kldiv: float = 1.,
         lam_geom: float = 0.,
         lam_egeom: float = 0.,
-        lam_mds: float = 10.,
+        lam_mds: float = 100.,
         mds_distf: str = 'euclidean',
         mds_nsamp: int = 4,
         verbose: bool = True
@@ -166,7 +166,7 @@ class ViVAE:
             lam_kldiv (float, optional): Weight of KL divergence from latent prior. Defaults to 1.
             lam_geom (float, optional): Weight of geometric loss term. Defaults to 0.
             lam_egeom (float, optional): Weight of encoder-geometric loss term. Defaults to 0.
-            lam_mds (float, optional): Weight of MDS loss term. Defaults to 10.
+            lam_mds (float, optional): Weight of MDS loss term. (We recommend 100 for scRNA-seq data and 10 for cytometry data.) Defaults to 100.
             mds_distf (str, optional): Distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 4.
             verbose (bool, optional): Whether to print training progress info. Defaults to True.
@@ -232,7 +232,7 @@ class ViVAE:
         lam_kldiv: float = 1.,
         lam_geom: float = 0.,
         lam_egeom: float = 0.,
-        lam_mds: float = 10.,
+        lam_mds: float = 100.,
         mds_distf: str = 'euclidean',
         mds_nsamp: int = 4,
         verbose: bool = True
@@ -249,7 +249,7 @@ class ViVAE:
             lam_kldiv (float, optional): Weight of KL divergence from latent prior. Defaults to 1.
             lam_geom (float, optional): Weight of geometric loss term. Defaults to 0.
             lam_egeom (float, optional): Weight of encoder-geometric loss term. Defaults to 0.
-            lam_mds (float, optional): Weight of MDS loss term. Defaults to 10.
+            lam_mds (float, optional): Weight of MDS loss term. (We recommend 100 for scRNA-seq data and 10 for cytometry data.) Defaults to 100.
             mds_distf (str, optional): Distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 4.
             verbose (bool, optional): Whether to print training progress info. Defaults to True.
