@@ -227,7 +227,7 @@ class GeometricLoss():
 class EncoderGeometricLoss():
     """Geometric loss for encoder
 
-    Penalises local stretching of latent space, quantified via Jacobian of the horizontal tangent space of the encoder.
+    Penalises local stretching of latent space, quantified via Jacobian of the encoder.
     """
     def __call__(self, submersion: Callable, x: torch.Tensor) -> torch.Tensor:
         """Geometric loss for encoder

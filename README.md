@@ -1,4 +1,4 @@
-# ViVAE
+<img src="./ViVAE_logo_small.png" alt="ViVAE" width="450"/>
 
 ViVAE is a toolkit for single-cell data denoising and dimensionality reduction.
 
@@ -64,8 +64,8 @@ In these tutorials we cover
 
 ## Benchmarking
 
-We benchmark ViVAE in terms of local and global structure preservation, using [ViScore](https://github.com/saeyslab/ViScore).
-The [ViScore](https://github.com/saeyslab/ViScore) repository contains our documented [benchmarking set-up](https://github.com/saeyslab/ViScore/blob/main/benchmarking), which can be extended to other datasets and DR methods.
+We benchmark ViVAE and other DR methods in terms of local and global structure preservation, using [ViScore](https://github.com/saeyslab/ViScore).
+The ViScore repository contains our documented [benchmarking set-up](https://github.com/saeyslab/ViScore/blob/main/benchmarking), which can be extended to other datasets and DR methods.
 
 ## Pre-print
 

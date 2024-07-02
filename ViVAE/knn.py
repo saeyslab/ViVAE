@@ -66,7 +66,7 @@ def correct_knn_for_duplicates(knn: list) -> List:
         knn[0][i][0], knn[0][i][idx_self] = knn[0][i][idx_self], knn[0][i][0]
     return knn
 
-def make_knn(x: Optional[np.ndarray] = None, fname: Optional[str] = None, k: int = 100, verbose: bool = True) -> List:
+def make_knn(x: Optional[np.ndarray] = None, fname: Optional[str] = None, k: int = 100, as_tuple: bool = False, verbose: bool = True) -> List:
     """Construct or load a k-NNG
 
     Construct a k-nearest-neighbour graph object with NN indices and coordinates.
@@ -75,10 +75,14 @@ def make_knn(x: Optional[np.ndarray] = None, fname: Optional[str] = None, k: int
         x (Optional[np.ndarray], optional): Point coordinates to build k-NNG on top of. Defaults to None.
         fname (Optional[str], optional): Path to k-NNG file for saving/loading. Defaults to None.
         k (int, optional): Nearest neighbour count. Defaults to 100.
+        as_tuple (bool, optional): Whether to return a tuple of NumPy arrays, instead of list. Defaults to False.
         verbose (bool, optional): Whether to print progress messages. Defaults to True.
 
     Returns:
-        List: List of neighbour indices and distances.
+        if `as_tuple` is True:
+            tuple: tuple of neighbour indices and distances.
+        else:
+            List: List of neighbour indices and distances.
     """
 
     if k < 1 or k > (x.shape[0]-1):
@@ -91,6 +95,8 @@ def make_knn(x: Optional[np.ndarray] = None, fname: Optional[str] = None, k: int
         knn_idcs = np.array(res[0], dtype=np.int64)
         knn_dist = np.array(res[1])
         knn = [knn_idcs, knn_dist]
+        if as_tuple:
+            knn = tuple(knn)
         return knn
     else:
         if verbose:
@@ -100,6 +106,8 @@ def make_knn(x: Optional[np.ndarray] = None, fname: Optional[str] = None, k: int
         knn = [knn_tuple[0].astype(np.int64), knn_tuple[1]]
         if not np.all([knn[0][idx,0]==idx for idx in range(x.shape[0])]):
             knn = correct_knn_for_duplicates(knn)
+        if as_tuple:
+            knn = tuple(knn)
         if fname is not None:
             np.save(fname, knn)
         return knn
