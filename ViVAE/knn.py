@@ -66,7 +66,7 @@ def correct_knn_for_duplicates(knn: list) -> List:
         knn[0][i][0], knn[0][i][idx_self] = knn[0][i][idx_self], knn[0][i][0]
     return knn
 
-def make_knn(x: Optional[np.ndarray] = None, fname: Optional[str] = None, k: int = 100, as_tuple: bool = False, verbose: bool = True) -> List:
+def make_knn(x: Optional[np.ndarray] = None, fname: Optional[str] = None, k: int = 100, as_tuple: bool = False, random_state: Optional[int] = None, verbose: bool = True) -> List:
     """Construct or load a k-NNG
 
     Construct a k-nearest-neighbour graph object with NN indices and coordinates.
@@ -76,6 +76,7 @@ def make_knn(x: Optional[np.ndarray] = None, fname: Optional[str] = None, k: int
         fname (Optional[str], optional): Path to k-NNG file for saving/loading. Defaults to None.
         k (int, optional): Nearest neighbour count. Defaults to 100.
         as_tuple (bool, optional): Whether to return a tuple of NumPy arrays, instead of list. Defaults to False.
+        random_state (int, optional): Random state for PyNNDescent to make the result reproducible. Default to None.
         verbose (bool, optional): Whether to print progress messages. Defaults to True.
 
     Returns:
@@ -101,7 +102,7 @@ def make_knn(x: Optional[np.ndarray] = None, fname: Optional[str] = None, k: int
     else:
         if verbose:
             print('Constructing k-NNG')
-        knn_index = pynndescent.NNDescent(x, n_neighbors=k+1)
+        knn_index = pynndescent.NNDescent(x, n_neighbors=k+1, random_state=random_state)
         knn_tuple = knn_index.query(x, k=k+1)
         knn = [knn_tuple[0].astype(np.int64), knn_tuple[1]]
         if not np.all([knn[0][idx,0]==idx for idx in range(x.shape[0])]):
