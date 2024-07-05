@@ -16,6 +16,7 @@ limitations under the License.
 
 from typing import Optional, Union, List, Dict
 
+import random
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, TensorDataset
@@ -178,14 +179,19 @@ class ViVAE:
         if lam_geom>0. and lam_recon==0.:
             raise ValueError('Decoder geometric loss can only be used if reconstruction loss is used')
 
+        g = torch.Generator()
+
         if self.random_state is not None:
             np.random.seed(self.random_state)
             torch.manual_seed(self.random_state)
-
+            random.seed(self.random_state)
+            g.manual_seed()
+        
         self.data_loader = DataLoader(
             TensorDataset(torch.Tensor(X)),
             batch_size=batch_size,
-            shuffle=True
+            shuffle=True,
+            generator=g
         )
         self.optimizer = torch.optim.Adam(
             self.net.parameters(),
