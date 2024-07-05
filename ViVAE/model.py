@@ -185,7 +185,7 @@ class ViVAE:
             np.random.seed(self.random_state)
             torch.manual_seed(self.random_state)
             random.seed(self.random_state)
-            g.manual_seed()
+            g.manual_seed(self.random_state)
         
         self.data_loader = DataLoader(
             TensorDataset(torch.Tensor(X)),
