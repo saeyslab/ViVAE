@@ -48,23 +48,23 @@ def decoder_jacobian_determinants(model: Autoencoder, x: Union[np.ndarray, torch
 
     We then compute the Jacobian matrix, which is a linearisation of the
     immersion function, for each point. We proceed to compute the determinant
-    of each of the Jacobian matrices and apply a log10 scaling and centering
-    around the mean.
+    of a metric tensor (computed from Jacobian matrices) and apply a log10
+    scaling and centering around the mean.
 
     By quantifying how much the latent space is stretched locally by the
     decoder, the determinant values reflect, indirectly, the local distortions
     of the latent space. This is, however, under the assumption that the
     reconstruction of input data by the decoder is good.
 
-    Decoder indicatrices are not transferrable between different immersion
-    functions. This means that the extent of their size and shape distortion
-    cannot be compared between embeddings from different autoencoder models. On
-    the other hand, being a local distortion measure, the distortion levels in
-    different parts of the embedding can be compared. This can show, for instance,
-    that a specific group of points (eg. biological population) seems embedded
-    less faithfully than another one.
+    The determinants are not transferrable between different immersion functions.
+    This means that the extent of their size and shape distortion cannot be
+    compared between embeddings from different autoencoder models. On the other
+    hand, being a local distortion measure, the distortion levels in different
+    parts of the embedding can be compared. This can show, for instance, that a
+    specific group of points (eg. biological population) seems embedded less
+    faithfully than another one.
 
-    Decoder indicatrices are adopted from the following publication:
+    Jacobian determinant computation is adopted from the following publication:
 
     Nazari, P., Damrich, S. and Hamprecht, F.A.. (2023).
     Geometric Autoencoders - What You See is What You Decode.
@@ -95,7 +95,6 @@ def decoder_jacobian_determinants(model: Autoencoder, x: Union[np.ndarray, torch
         ## Compute metric tensor
         jac = jacobian(model.decoder, act)
         metric = metric_tensor(jac)
-        jac = torch.func.vmap(torch.func.jacfwd(model.decoder), in_dims=(0,))(act)
         ## Compute determinants
         batch_dets = torch.linalg.det(metric)
         dets = torch.hstack((dets, batch_dets))
@@ -106,7 +105,6 @@ def decoder_jacobian_determinants(model: Autoencoder, x: Union[np.ndarray, torch
     rel_dets = rel_dets-1
     rel_dets = rel_dets.detach().numpy()
     return rel_dets
-
 
 def encoder_indicatrices(
     model: Autoencoder,

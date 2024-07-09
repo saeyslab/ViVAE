@@ -44,7 +44,7 @@ def jacobian(f: Callable, x: torch.Tensor) -> torch.Tensor:
     """Compute Jacobian matrices
 
     Args:
-        f (Callable): Immersion function.
+        f (Callable): Immersion/submersion function.
         x (torch.Tensor): Input to `f`.
 
     Returns:
