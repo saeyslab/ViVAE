@@ -20,6 +20,7 @@ import random
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, TensorDataset
+torch.use_deterministic_algorithms(True)
 
 from .network import Autoencoder
 from .diagnostics import decoder_jacobian_determinants, EncoderIndicatome, DecoderIndicatome, encoder_indicatrices, decoder_indicatrices

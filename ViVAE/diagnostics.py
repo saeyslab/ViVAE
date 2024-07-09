@@ -31,6 +31,7 @@ import math
 
 import numpy as np
 import torch
+torch.use_deterministic_algorithms(True)
 from torch.utils.data import DataLoader
 
 from scipy.spatial import Delaunay

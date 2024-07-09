@@ -33,8 +33,6 @@ from typing import Optional, Union, List, Tuple
 
 import numpy as np
 
-import torch
-
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection
@@ -338,6 +336,7 @@ def plot_embedding(
 def plot_indicatrices(
         indicatrices: Union[EncoderIndicatome,DecoderIndicatome],
         scale_factor: Optional[float] = None,
+        log10: bool = False,
         s: float = 0.05,
         figsize: Tuple[int, int] = (5,5),
         **kwargs
@@ -349,6 +348,7 @@ def plot_indicatrices(
     Args:
         indicatrices (Union[EncoderIndicatome,DecoderIndicatome]): Set of indicatrices.
         scale_factor (float, optional): Scaling factor for the polygons. Defaults to 1e-2 for decoder and radius^(-1) for encoder.
+        log10 (bool, optional): Whether to use log10-scaling relative to indicatrix size. Defaults to False.
         s (float, optional): Point size. Defaults to 0.05.
         figsize (Tuple[int, int], optional): Figure size. Defaults to (5,5).
         **kwargs: Keywords arguments to `matplotlib.pyplot.scatter`.

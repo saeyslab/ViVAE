@@ -38,6 +38,7 @@ from typing import Callable, List, Union, Optional
 
 import numpy as np
 import torch
+torch.use_deterministic_algorithms(True)
 
 from .geometry import jacobian, metric_tensor
 

@@ -34,6 +34,7 @@ import numpy as np
 from scipy.spatial import Delaunay
 
 import torch
+torch.use_deterministic_algorithms(True)
 import torch.func
 from torch.utils.data import DataLoader
 
@@ -161,19 +162,24 @@ class EncoderIndicatome():
         return points
 
     @staticmethod
-    def scale_ellipse(circum: torch.Tensor, origin: torch.Tensor, factor: float = 10.) -> torch.Tensor:
+    def scale_ellipse(circum: torch.Tensor, origin: torch.Tensor, factor: float = 10., log: bool = False) -> torch.Tensor:
         """Scale a 2-d ellipse
 
         Args:
             circum (torch.Tensor): Points from circumference of ellipse.
             origin (torch.Tensor): Origin (center) of ellipse.
             factor (float, optional): _description_. Factor by which to scale. Defaults to 10..
+            log (bool, optional): Whether to use log10 scaling. Defaults to False.
 
         Returns:
             torch.Tensor: Corresponding points from circumference of re-scaled ellipse.
         """
         vecs = circum-origin
-        vecs *= factor
+        if log:
+            w = torch.log10(torch.norm(vecs, p=2, dim=0))
+            vecs *= w*factor
+        else:
+            vecs *= factor
         res = origin+vecs
         return res
 
@@ -232,7 +238,7 @@ class EncoderIndicatome():
         _, _, v = torch.svd(jac, some=False)
         htv = v[:, :2]
 
-        ## Create hyperspheres
+        ## Create indicatrices in ambient space
         xp = []
         for i in range(xr.shape[0]):
             origin = xr[i]
@@ -241,7 +247,7 @@ class EncoderIndicatome():
             circle = EncoderIndicatome.circle_on_2manifold(origin, t1, t2, r, n_polygon)
             xp.append(circle)
 
-        ## Submerge hyperspheres
+        ## Submerge indicatrices
         zp = [self.model.submersion(this_xp) for this_xp in xp]
         self.zp = zp
 
@@ -253,17 +259,18 @@ class EncoderIndicatome():
         """
         return self.act
 
-    def get_polygons(self, scale_factor: float = 1e-2) -> PatchCollection:
+    def get_polygons(self, scale_factor: float = 1e-2, log: bool = False) -> PatchCollection:
         """Get polygonal approximations of indicatrices
         Args:
             scale_factor (float, optional): Scaling factor for polygons. Defaults to 1e-2.
+            log (bool, optional): Whether to use log10 scaling. Defaults to False.
         
         Returns:
             matplotlib.collections.PatchCollection: Collection of polygons.
         """
         zp_scaled = []
         for i in range(self.zr.shape[0]):
-            res = EncoderIndicatome.scale_ellipse(self.zp[i], self.zr[i], scale_factor)
+            res = EncoderIndicatome.scale_ellipse(self.zp[i], self.zr[i], scale_factor, log)
             zp_scaled.append(res)
         polygons = [Polygon(tuple(vec.tolist()), closed=True) for vec in zp_scaled]
         p = PatchCollection(polygons)

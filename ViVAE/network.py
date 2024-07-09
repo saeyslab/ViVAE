@@ -20,6 +20,7 @@ from typing import List, Dict, Union, Optional
 import numpy as np
 
 import torch
+torch.use_deterministic_algorithms(True)
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
