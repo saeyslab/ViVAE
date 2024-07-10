@@ -1,6 +1,6 @@
 <img src="./ViVAE_logo_small.png" alt="ViVAE" width="450"/>
 
-ViVAE is a toolkit for single-cell data denoising and dimensionality reduction.
+ViVAE (*vee-vay*) is a toolkit for single-cell data denoising and dimensionality reduction.
 
 It is published together with **[ViScore](https://github.com/saeyslab/ViScore)**, a collection of tools for evaluation of dimensionality reduction.
 Our [pre-print](https://www.biorxiv.org/content/10.1101/2023.11.23.568428v2) uses an [older version](https://github.com/saeyslab/ViVAE_old) of ViVAE.
