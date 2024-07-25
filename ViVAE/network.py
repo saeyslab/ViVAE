@@ -191,7 +191,8 @@ class Autoencoder(nn.Module):
         l_geom = None
         l_egeom = None
         l_mds = None
-        l_recon = lam_recon*self.reconstruction_error(x, xhat)
+        if lam_recon>0.:
+            l_recon = lam_recon*self.reconstruction_error(x, xhat)
         if lam_geom>0.:
             l_geom = lam_geom*self.geometric_error(self.immersion, z)
         if lam_egeom>0.:

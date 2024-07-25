@@ -111,13 +111,16 @@ class ViVAE:
             )
 
             recon = model_loss['recon']
-            recon_error += recon.item()
-            if self.net.variational:
-                kldiv = model_loss['kldiv']
-                kldiv_error += kldiv.item()
-                loss = recon + kldiv
+            if recon is not None:
+                recon_error += recon.item()
+                if self.net.variational:
+                    kldiv = model_loss['kldiv']
+                    kldiv_error += kldiv.item()
+                    loss = recon + kldiv
+                else:
+                    loss = recon
             else:
-                loss = recon
+                loss = 0.
             if model_loss['geom'] is not None:
                 geom = model_loss['geom']
                 geom_error += geom.item()
