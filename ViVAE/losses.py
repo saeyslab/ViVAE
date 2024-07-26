@@ -180,7 +180,6 @@ class MDSLoss():
         loss = torch.FloatTensor([0.])
 
         for _ in range(n_sampling):
-            idcs = torch.randperm(x.size()[0])
         
             idcs = [0, nq, nq*2, nq*3]
             xq = [x[np.arange(idx, idx+nq)] for idx in idcs]
