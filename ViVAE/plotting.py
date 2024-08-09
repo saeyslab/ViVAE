@@ -41,7 +41,6 @@ import matplotlib.collections as mc
 from matplotlib.patches import Circle, Wedge
 import pandas as pd
 import copy
-import flowsom as fs
 
 from .geometry import EncoderIndicatome, DecoderIndicatome
 
@@ -68,7 +67,7 @@ def plot_embedding(
     values: Optional[np.ndarray] = None,
     s: float = 0.05,
     equal_axis_scales: bool = True,
-    fsom: Optional[fs.main.FlowSOM] = None,
+    fsom = None,
     fsom_background_alpha: float = 0.35,
     fsom_show_nodes: bool = True,
     fsom_view: Optional[str] = 'labels',
@@ -179,6 +178,7 @@ def plot_embedding(
     ## The following code has been adapted based on FlowSOM_Python
     ## https://github.com/saeyslab/FlowSOM_Python
     if draw_mst:
+        import flowsom as fs
         ## Determine FlowSOM tree node sizes
         cluster_sizes = fsom.get_cluster_data().obs['percentages']
         cluster_empty = cluster_sizes==0.
