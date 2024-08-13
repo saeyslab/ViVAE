@@ -1,0 +1,151 @@
+---
+title: "Running ViVAE from R"
+author: "David Novak"
+date: "2024-08-12"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+If you are used to analysing your scRNA-seq or cytometry data using R, running some of the newer deep learning algorithms can be a hassle.
+Since ViVAE uses PyTorch for training of its neural network models, it is currently only implemented in Python.
+
+**We are working on an R implementation of ViVAE that uses *torch for R*, but this will take some time.**
+
+In the meantime, you can take advantage of the *reticulate* framework which allows you use Python packages in your R session and run ViVAE from R that way.
+
+This vignette goes through the basic steps required to do that.
+
+## Requirements
+
+To run the code in this vignette, you will need to install `reticulate` and `tidyverse` from CRAN and `HDCytoData` from Bioconductor.
+
+```{r install-requirements, eval=FALSE}
+install.packages('reticulate')
+install.packages('tidyverse')
+install.packages('BiocManager') # likely to be installed already
+BiocManager::install('HDCytoData')
+```
+
+## Setting up an Anaconda environment
+
+In a fresh R session, we can now load `reticulate`, create an Anaconda environment and install the Python libraries we need.
+In the following snippet, we install *ViVAE* as well as *ViScore*, to be able to evaluate our embeddings.
+
+```{r install-reticulate, eval=FALSE}
+library(reticulate)
+
+## Create Anaconda environment
+conda_create('r-vivae', python_version = '3.11.7')
+use_condaenv(condaenv = 'r-vivae')
+
+## Install ViVAE
+conda_install(
+  envname = 'r-vivae',
+  packages = c(
+    'numpy==1.26.3', 'numba==0.59.0', 'pandas==2.2.0', 'matplotlib==3.8.2',
+    'scipy==1.12.0', 'pynndescent==0.5.11', 'scikit-learn==1.4.0', 'pytorch==2.1.2',
+    'scanpy==1.9.8'
+))
+py_install('git+https://github.com/saeyslab/ViVAE.git', pip = TRUE)
+
+## Install ViScore
+py_install('pyemd==1.0.0', pip = TRUE)
+py_install('git+https://github.com/saeyslab/ViScore.git', pip = TRUE)
+```
+
+If we want to use GPU acceleration (which is strongly preferred), the availability of that can be tested easily.
+To test whether PyTorch can use CUDA acceleration (with NVIDIA GPUs) or MPS (with AMD or Apple Silicon GPUs on Mac computers), we run the following.
+
+```{r test-gpu, eval=FALSE}
+py_run_string('import torch; print(f"CUDA available: {torch.cuda.is_available()}"); print(f"MPS available: {torch.backends.mps.is_available()}")')
+```
+
+## Creating an embedding
+
+In this example, we will use the `HDCytoData` package to load a labelled mass cytometry bone marrow dataset (doi:10.1038/nmeth.3863) and apply a basic data transformation.
+
+```{r preprocessing, eval=FALSE}
+library(HDCytoData)
+
+## Download Samusik data
+d <- Samusik_01_flowSet()
+
+## Extract expression of select markers
+e <- d[[1]]@exprs
+marker_info <- d[[1]]@description$MARKER_INFO
+e <- e[, marker_info$channel_name[marker_info$marker_class=='type']]
+
+## Apply transformation
+e <- asinh(e/5)
+
+## Extract labels
+pop_info <- d[[1]]@description$POPULATION_INFO
+labs <- as.factor(pop_info$population_name[d[[1]]@exprs[, 'population_id']])
+```
+
+Next, we use ViVAE to denoise and embed the data.
+Note that when interfacing with Python, any numbers that are integers are clearly denoted as such (by appending an `L` to a number or wrapping an object in `as.integer`).
+
+```{r embedding, eval=FALSE}
+## Import ViVAE
+vivae <- import('ViVAE')
+
+## Compute a k-nearest-neighbour graph
+knn <- vivae$make_knn(e, fname = 'Samusik_knn.npy', k = 100L, random_state = 42L)
+
+## Denoise expression matrix
+e_d <- vivae$smooth(e, knn, k = 100L, coef = 1., n_iter = 1L)
+
+## Initialise and train a ViVAE model
+model <- vivae$ViVAE(input_dim = as.integer(ncol(e)), latent_dim = 2L, random_state = 1L)
+model$fit(e_d, n_epochs = 50L, batch_size = 512L)
+
+## Produce an embedding
+emb <- model$transform(e_d)
+emb <- cbind(as.data.frame(emb), labs)
+colnames(emb) <- c('Component1', 'Component2', 'Population')
+```
+
+Now that we have an embedding, we can plot the 2-dimensional layout with labels.
+
+```{r plotting, eval=FALSE}
+library(tidyverse)
+ggplot() +
+  geom_point(
+    data = emb[emb$Population=='unassigned', ],
+    mapping = aes(x = Component1, y = Component2),
+    colour = 'grey',
+    size = .001, alpha = .5
+  ) +
+  geom_point(
+    data = emb[emb$Population!='unassigned', ],
+    mapping = aes(x = Component1, y = Component2, col = Population),
+    size = .001, alpha = .5
+  ) +
+  theme_minimal() +
+  guides(colour = guide_legend(override.aes = list(size = 5)))
+```
+
+## Structure-preservation scores
+
+Using *ViScore*, we can evaluate the embedding we just created.
+We compute Local and Global Structure Preservation below.
+
+```{r sp, eval=FALSE}
+## Import ViScore
+viscore <- import('ViScore')
+
+## Compute and report RNX-based Local and Global SP
+sp <- viscore$score(hd = e, ld = as.matrix(emb[, c(1, 2)])) # make sure we pass numeric matrices (no data frames)
+cat('Local SP:\t', round(sp$Sl, 3), '\nGlobal SP:\t', round(sp$Sg, 3))
+```
+
+
+
+
+

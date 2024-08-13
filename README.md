@@ -50,7 +50,7 @@ This will print either `True` or `False`.
 ## Installing and using ViVAE in R
 
 We are working on an R implementation of ViVAE that is independent of PyTorch.
-In the meantime, to install and run ViVAE in R, use our [R vignette](https://github.com/saeyslab/ViVAE/blob/main/example_r.html).
+In the meantime, to install and run ViVAE in R, use our [R vignette](https://github.com/saeyslab/ViVAE/blob/main/example_r.Rmd) (an RMarkdown file).
 
 ## Tutorials
 
