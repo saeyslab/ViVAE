@@ -47,6 +47,11 @@ python -c "import torch; print(torch.backends.mps.is_available())"
 
 This will print either `True` or `False`.
 
+## Installing and using ViVAE in R
+
+We are working on an R implementation of ViVAE that is independent of PyTorch.
+In the meantime, to install and run ViVAE in R, use our [R vignette](https://github.com/saeyslab/ViVAE/blob/main/example_r.html).
+
 ## Tutorials
 
 We provide tutorials on using ViVAE with cytometry data ([here](https://github.com/saeyslab/ViVAE/blob/main/example_cytometry.ipynb)) and with scRNA-seq data ([here](https://colab.research.google.com/drive/1eNpgH_TzbCSu-_4ZPmK7tk6It4BYK5sh?usp=sharing)).
