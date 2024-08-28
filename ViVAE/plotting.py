@@ -388,6 +388,9 @@ def plot_indicatrices(
     pol.set_color([0 / 255, 0 / 255, 0 / 255, 0.3])
     ax.add_collection(pol)
 
+    ax.tick_params(axis='both', labelbottom=False, labelleft=False, bottom=False, left=False)
+    ax.axis('equal')
+
     if show:
         plt.show()
     else:
