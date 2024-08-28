@@ -16,13 +16,16 @@ We are heavily re-working the pre-print right now!
 
 ## Installation
 
+<details>
+<summary>Python installation</summary>
+
 ViVAE is a Python package based on PyTorch.
 We recommend creating a new Anaconda environment for it.
 
 On Linux or macOS, use the command line for installation.
 On Windows, use Anaconda Prompt.
 
-```
+```bash
 conda create --name ViVAE python=3.11.7 \
     numpy==1.26.3 numba==0.59.0 pandas==2.2.0 matplotlib==3.8.2 scipy==1.12.0 pynndescent==0.5.11 scikit-learn==1.4.0 scanpy==1.9.8 pytorch==2.1.2
 conda activate ViVAE
@@ -30,41 +33,62 @@ pip install git+https://github.com/saeyslab/FlowSOM_Python.git@80529c6b7a1747e8e
 pip install --upgrade git+https://github.com/saeyslab/ViVAE.git
 ```
 
-### GPU verification
-
 GPU acceleration is recommended if available.
 To verify whether PyTorch can use CUDA, activate your ViVAE environment and type:
 
-```
+```bash
 python -c "import torch; print(torch.cuda.is_available())"
 ```
 
 Alternatively, to verify whether PyTorch can use Metal (on AMD/Apple Silicon Macs):
 
-```
+```bash
 python -c "import torch; print(torch.backends.mps.is_available())"
 ```
 
 This will print either `True` or `False`.
 
-## Installing and using ViVAE in R
+</details>
+
+<details>
+<summary>R installation</summary>
 
 We are working on an R implementation of ViVAE that is independent of PyTorch.
 In the meantime, to install and run ViVAE in R, use our [R vignette](https://github.com/saeyslab/ViVAE/blob/main/example_r.Rmd) (an RMarkdown file).
 
+</details>
+
 ## Tutorials
 
-We provide tutorials on using ViVAE with cytometry data ([here](https://github.com/saeyslab/ViVAE/blob/main/example_cytometry.ipynb)) and with scRNA-seq data ([here](https://colab.research.google.com/drive/1eNpgH_TzbCSu-_4ZPmK7tk6It4BYK5sh?usp=sharing)).
+<details>
+<summary>Using ViVAE with scRNA-seq data</summary>
+
+ViVAE was primarily designed for, and tested with, single-cell transcriptomic datasets.
+Since these datasets are very high-dimensional and their pre-processing can be computationally intensive, we provide the option to run your first analysis with ViVAE remotely using Google Colab.
+A Jupyter notebook tutorial is available [here](https://colab.research.google.com/drive/1eNpgH_TzbCSu-_4ZPmK7tk6It4BYK5sh?usp=sharing).
+</details>
+
+<details>
+<summary>Using ViVAE with cytometry data</summary>
+
+ViVAE is straightforward to use with flow and mass cytometry data.
+Its structure-preserving properties are especially advantageous if global structures are of interest.
+Additionally, ViVAE integrates with FlowSOM to provide a graph-based view of cytometry datasets.
+
+We provide a Jupyter notebook tutorial [here](https://github.com/saeyslab/ViVAE/blob/main/example_cytometry.ipynb) here that covers importing and pre-processing of data, denoising, dimensionality reduction and evaluation of the resulting embedding.
+
+In addition, our [R installation vignette](https://github.com/saeyslab/ViVAE/blob/main/example_r.Rmd) shows how to use ViVAE denoising and dimensionality reduction from R.
+</details>
 
 In these tutorials we cover
 
 * import of input files
-* standard pre-processing
-* dimensionality reduction and its hyperparameters
+* standard pre-processing workflow
+* dimensionality reduction and hyperparameter tuning
 * integration of ViVAE with FlowSOM
-* encoder indicatrices for distortion detection
+* encoder indicatrices for detection of localised distortions
 * evaluation of structure preservation with [ViScore](https://github.com/saeyslab/ViScore)
-* evaluation of distortions of annotated populations with ViScore
+* evaluation of distortions of annotated populations with ViScore using the xNPE scoring metric
 * saving and loading trained ViVAE models
 
 ## Benchmarking
