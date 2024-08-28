@@ -49,6 +49,7 @@ python -c "import torch; print(torch.backends.mps.is_available())"
 
 This will print either `True` or `False`.
 
+<hr>
 </details>
 
 <details>
@@ -67,8 +68,10 @@ In the meantime, to install and run ViVAE in R, use our [R vignette](https://git
 <br>
 
 ViVAE was primarily designed for, and tested with, single-cell transcriptomic datasets.
-Since these datasets are very high-dimensional and their pre-processing can be computationally intensive, we provide the option to run your first analysis with ViVAE remotely using Google Colab.
-A Jupyter notebook tutorial is available [here](https://colab.research.google.com/drive/1eNpgH_TzbCSu-_4ZPmK7tk6It4BYK5sh?usp=sharing).
+We provide an example workflow for analysis of bone marrow transcriptome data with ViVAE.
+The tutorial is provided as a Jupyter notebook [here](https://github.com/saeyslab/ViVAE/blob/main/example_scrnaseq.ipynb).
+
+<hr>
 </details>
 
 <details>
@@ -82,6 +85,8 @@ Additionally, ViVAE integrates with FlowSOM to provide a graph-based view of cyt
 We provide a Jupyter notebook tutorial [here](https://github.com/saeyslab/ViVAE/blob/main/example_cytometry.ipynb) here that covers importing and pre-processing of data, denoising, dimensionality reduction and evaluation of the resulting embedding.
 
 In addition, our [R installation vignette](https://github.com/saeyslab/ViVAE/blob/main/example_r.Rmd) shows how to use ViVAE denoising and dimensionality reduction from R.
+
+<hr>
 </details>
 
 In these tutorials we cover
