@@ -78,7 +78,9 @@ def plot_embedding(
     fsom_plot_unassigned: bool = False,
     dr_model = None,
     palette: List = palette,
-    figsize: Tuple[int, int] = (6,6)
+    bbox_to_anchor: tuple = (1.05, 1.05),
+    figsize: Tuple[int, int] = (6,6),
+    show: bool = True
 ):
     """Plot 2-d embedding
 
@@ -129,6 +131,11 @@ def plot_embedding(
         dr_model (optional): Dimension-reduction model with a `.transform` method that generated `embedding`. To be provided if `fsom` is specified and the FlowSOM model was trained on the original (high-dimensional) data. Defaults to None.
         palette (List, optional): Custom hex-code colour palette for `labels`.
         figsize (Tuple, optional): Size of figure to display. Defaults to (6,6).
+        bbox_to_anchor (Tuple, optional): Bounding box argument for the matplotlib legend position (only applies to legend with population labels). Defaults to (1.05, 1.05).
+        show (bool, optional): Whether to show the plot, in addition to returning the fig, ax objects. Defaults to True.
+
+    Returns:
+        fig, ax: a matplotlib.figure.Figure object and matplotlib.axes._axes.Axes object from matplotlib.pyplot.subplots
     """
     fig, ax = plt.subplots(figsize=figsize)
 
@@ -137,6 +144,9 @@ def plot_embedding(
         alpha = fsom_background_alpha
     else:
         alpha = 1.
+
+    ax.tick_params(axis='both', labelbottom=False, labelleft=False, bottom=False, left=False)
+    ax.axis('equal')
 
     if labels is not None:
         ## Plot overlay of population labels
@@ -158,7 +168,7 @@ def plot_embedding(
             ax.scatter(embedding[idcs,0], embedding[idcs,1], label=pop, s=s, c=palette[idx_pop], alpha=alpha)
             idx_pop += 1
         if not (draw_mst and fsom_view=='markers' and fsom_markers is not None):
-            l = plt.legend(bbox_to_anchor=(1.05, 1.05), loc='upper left', markerscale=30)
+            l = plt.legend(bbox_to_anchor=bbox_to_anchor, loc='upper left', markerscale=30)
 
             for lh in l.legend_handles: 
                 lh.set_alpha(1.)
@@ -331,7 +341,13 @@ def plot_embedding(
     if equal_axis_scales:
         ax.axis('equal')
     fig.patch.set_facecolor('white')
-    plt.show()
+    
+    if show:
+        plt.show()
+    else:
+        plt.close()
+
+    return fig, ax
 
 def plot_indicatrices(
         indicatrices: Union[EncoderIndicatome,DecoderIndicatome],
@@ -339,6 +355,7 @@ def plot_indicatrices(
         log10: bool = False,
         s: float = 0.05,
         figsize: Tuple[int, int] = (5,5),
+        show: bool = True,
         **kwargs
     ):
     """Plot encoder/decoder indicatrices
@@ -351,7 +368,11 @@ def plot_indicatrices(
         log10 (bool, optional): Whether to use log10-scaling relative to indicatrix size. Defaults to False.
         s (float, optional): Point size. Defaults to 0.05.
         figsize (Tuple[int, int], optional): Figure size. Defaults to (5,5).
+        show (bool, optional): Whether to show the plot, in addition to returning the fig, ax objects. Defaults to True.
         **kwargs: Keywords arguments to `matplotlib.pyplot.scatter`.
+
+    Returns:
+        fig, ax: a matplotlib.figure.Figure object and matplotlib.axes._axes.Axes object from matplotlib.pyplot.subplots
     """
     if scale_factor is None:
         if isinstance(indicatrices, EncoderIndicatome):
@@ -367,4 +388,9 @@ def plot_indicatrices(
     pol.set_color([0 / 255, 0 / 255, 0 / 255, 0.3])
     ax.add_collection(pol)
 
-    plt.show()
+    if show:
+        plt.show()
+    else:
+        plt.close()
+
+    return ax
