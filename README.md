@@ -18,7 +18,7 @@ We are heavily re-working the pre-print right now!
 
 <details>
 <summary><b>Python installation</b></summary>
-
+<hr>
 
 ViVAE is a Python package based on PyTorch.
 We recommend creating a new Anaconda environment for it.
@@ -53,6 +53,7 @@ This will print either `True` or `False`.
 
 <details>
 <summary><b>R installation</b></summary>
+<hr>
 
 We are working on an R implementation of ViVAE that is independent of PyTorch.
 In the meantime, to install and run ViVAE in R, use our [R vignette](https://github.com/saeyslab/ViVAE/blob/main/example_r.Rmd) (an RMarkdown file).
@@ -63,7 +64,7 @@ In the meantime, to install and run ViVAE in R, use our [R vignette](https://git
 
 <details>
 <summary><b>Using ViVAE with scRNA-seq data</b></summary>
-
+<hr>
 
 ViVAE was primarily designed for, and tested with, single-cell transcriptomic datasets.
 Since these datasets are very high-dimensional and their pre-processing can be computationally intensive, we provide the option to run your first analysis with ViVAE remotely using Google Colab.
@@ -72,7 +73,7 @@ A Jupyter notebook tutorial is available [here](https://colab.research.google.co
 
 <details>
 <summary><b>Using ViVAE with cytometry data</b></summary>
-
+<hr>
 
 ViVAE is straightforward to use with flow and mass cytometry data.
 Its structure-preserving properties are especially advantageous if global structures are of interest.
