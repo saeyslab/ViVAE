@@ -383,7 +383,7 @@ def plot_indicatrices(
     emb = indicatrices.get_embedding()
     pol = indicatrices.get_polygons(scale_factor=scale_factor)
 
-    _, ax = plt.subplots(figsize=figsize)
+    fig, ax = plt.subplots(figsize=figsize)
     ax.scatter(emb[:,0], emb[:,1], s=s, **kwargs)
     pol.set_color([0 / 255, 0 / 255, 0 / 255, 0.3])
     ax.add_collection(pol)
@@ -393,4 +393,4 @@ def plot_indicatrices(
     else:
         plt.close()
 
-    return ax
+    return fig, ax
