@@ -6,6 +6,8 @@ It is published together with **[ViScore](https://github.com/saeyslab/ViScore)**
 Our [pre-print](https://www.biorxiv.org/content/10.1101/2023.11.23.568428v2) uses an [older version](https://github.com/saeyslab/ViVAE_old) of ViVAE.
 We are heavily re-working the pre-print right now!
 
+<img src="./overview.png" alt="ViVAE" width="900"/>
+
 ## Why use ViVAE
 
 * ViVAE strikes a favourable balance between local and global structure preservation.
@@ -13,16 +15,6 @@ We are heavily re-working the pre-print right now!
 * ViVAE implements encoder indicatrices: a tool to measure local distortions of latent space.
 * ViVAE integrates with [FlowSOM](https://github.com/saeyslab/FlowSOM_Python) for visualisation.
 * ViVAE is a parametric model, enabling transfer learning and embedding of new points.
-
-<details>
-<summary><b>Schematic overview of ViVAE and ViScore</b></summary>
-<br>
-
-<img src="./overview.png" alt="ViVAE" width="900"/>
-
-</details>
-
-<hr>
 
 ## Installation
 
@@ -71,8 +63,6 @@ In the meantime, to install and run ViVAE in R using [reticulate](https://rstudi
 
 </details>
 
-<hr>
-
 ## Tutorials
 
 <details>
@@ -107,8 +97,6 @@ We provide a Jupyter notebook tutorial (`tutorials/example_cytometry.ipynb`) tha
 Our R installation vignette (`tutorials/example_r.Rmd`) shows how to use ViVAE denoising and dimensionality reduction from R.
 
 </details>
-
-<hr>
 
 ## Case studies
 
@@ -155,8 +143,6 @@ We use ViVAE to create a nice embedding of the data, then use FlowSOM for cluste
 To explore more options for evaluating cytometry data embeddings and integrating FlowSOM for informative visualisation, we refer you to the cytometry analysis tutorial in `tutorials/example_cytometry.ipynb`.
 
 </details>
-
-<hr>
 
 ## Benchmarking
 
