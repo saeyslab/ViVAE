@@ -109,7 +109,7 @@ These case studies are described further in our publication.
 <summary><b>Breast immune cells transcriptome study (Reed)</b></summary>
 <br>
 
-`case_study_reed.ipynb` provides code to reproduce the (*Reed*)[https://cellxgene.cziscience.com/collections/48259aa8-f168-4bf5-b797-af8e88da6637] dataset case study from our paper.
+`case_study_reed.ipynb` provides code to reproduce the [*Reed*](https://cellxgene.cziscience.com/collections/48259aa8-f168-4bf5-b797-af8e88da6637) dataset case study from our paper.
 This dataset comes from the Human Breast Cell Atlas.
 The authors provide labels for various leukocyte populations.
 
@@ -122,7 +122,7 @@ We compare ViVAE with t-SNE and UMAP and describe embedding errors per cell popu
 <summary><b>Developing zebrafish embryos transcriptome study (Farrell)</b></summary>
 <br>
 
-`case_study_farrell.ipynb` provides code to reproduce the (*Farrell*)[https://singlecell.broadinstitute.org/single_cell/study/SCP162/single-cell-reconstruction-of-developmental-trajectories-during-zebrafish-embryogenesis] dataset case study from our paper.
+`case_study_farrell.ipynb` provides code to reproduce the [*Farrell*](https://singlecell.broadinstitute.org/single_cell/study/SCP162/single-cell-reconstruction-of-developmental-trajectories-during-zebrafish-embryogenesis) dataset case study from our paper.
 This dataset contains cells from multiple stages of zebrafish embryo development.
 The authors provide labels of distinct cell lineages.
 
@@ -136,7 +136,7 @@ We use encoder indicatrices to describe different manners of latent space distor
 <summary><b>Mouse bone marrow CyTOF dataset study (Samusik)</b></summary>
 <br>
 
-`case_study_samusik.ipynb` provides code to reproduce the (*Samusik*)[https://pubmed.ncbi.nlm.nih.gov/27183440/] dataset case study from our paper.
+`case_study_samusik.ipynb` provides code to reproduce the [*Samusik*](https://pubmed.ncbi.nlm.nih.gov/27183440/) dataset case study from our paper.
 This is a popular reference dataset for showcasing dimensionality reduction and clustering tools.
 The authors provide labels for various immune cell populations.
 
@@ -144,7 +144,6 @@ We use ViVAE to create a nice embedding of the data, then use FlowSOM for cluste
 
 To explore more options for evaluating cytometry data embeddings and integrating FlowSOM for informative visualisation, we refer you to the cytometry analysis tutorial in `tutorials/example_cytometry.ipynb`.
 
-<hr>
 </details>
 
 <hr>
