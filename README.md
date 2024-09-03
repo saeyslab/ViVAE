@@ -84,7 +84,7 @@ The tutorial is provided as a Jupyter notebook (`tutorials/example_scrnaseq.ipyn
 </details>
 
 <details>
-<summary><b>Using ViVAE with cytometry data (Samusik)</b></summary>
+<summary><b>Using ViVAE with cytometry data</b></summary>
 <br>
 
 ViVAE, while intended mainly for scRNA-seq data, is straightforward to use with flow and mass cytometry data as well.
@@ -107,6 +107,7 @@ These case studies are described further in our publication.
 
 <details>
 <summary><b>Breast immune cells transcriptome study (Reed)</b></summary>
+<br>
 
 `case_study_reed.ipynb` provides code to reproduce the (*Reed*)[https://cellxgene.cziscience.com/collections/48259aa8-f168-4bf5-b797-af8e88da6637] dataset case study from our paper.
 This dataset comes from the Human Breast Cell Atlas.
@@ -119,6 +120,7 @@ We compare ViVAE with t-SNE and UMAP and describe embedding errors per cell popu
 
 <details>
 <summary><b>Developing zebrafish embryos transcriptome study (Farrell)</b></summary>
+<br>
 
 `case_study_farrell.ipynb` provides code to reproduce the (*Farrell*)[https://singlecell.broadinstitute.org/single_cell/study/SCP162/single-cell-reconstruction-of-developmental-trajectories-during-zebrafish-embryogenesis] dataset case study from our paper.
 This dataset contains cells from multiple stages of zebrafish embryo development.
@@ -132,6 +134,7 @@ We use encoder indicatrices to describe different manners of latent space distor
 
 <details>
 <summary><b>Mouse bone marrow CyTOF dataset study (Samusik)</b></summary>
+<br>
 
 `case_study_samusik.ipynb` provides code to reproduce the (*Samusik*)[https://pubmed.ncbi.nlm.nih.gov/27183440/] dataset case study from our paper.
 This is a popular reference dataset for showcasing dimensionality reduction and clustering tools.
