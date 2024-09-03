@@ -57,10 +57,11 @@ This will print either `True` or `False`.
 <br>
 
 We are working on an R implementation of ViVAE that is independent of PyTorch.
-In the meantime, to install and run ViVAE in R using [reticulate](https://rstudio.github.io/reticulate/), use our [R vignette](https://github.com/saeyslab/ViVAE/blob/main/example_r.Rmd) (an RMarkdown file).
+In the meantime, to install and run ViVAE in R using [reticulate](https://rstudio.github.io/reticulate/), use our R vignette (`tutorials/example_r.Rmd`) (an RMarkdown file you can open in RStudio).
+
+</details>
 
 <hr>
-</details>
 
 ## Tutorials
 
@@ -69,37 +70,81 @@ In the meantime, to install and run ViVAE in R using [reticulate](https://rstudi
 <br>
 
 ViVAE was primarily designed for, and tested with, single-cell transcriptomic datasets.
-We provide an example workflow for analysis of bone marrow transcriptome data with ViVAE.
-The tutorial is provided as a Jupyter notebook [here](https://github.com/saeyslab/ViVAE/blob/main/example_scrnaseq.ipynb).
+
+To get you started, we provide an example workflow for analysis of bone marrow single-cell transcriptomic data with ViVAE.
+We evaluate the separation of distincts immune cell lineages and general structure preservation by ViVAE, t-SNE and UMAP.
+
+Additionally, we compute embedding errors by population and demonstrate the use of neighbourhood composition plots for explaining sources of error.
+
+Advantages and potential pitfalls of smooth embeddings are described and discussed.
+
+The tutorial is provided as a Jupyter notebook (`tutorials/example_scrnaseq.ipynb`).
 
 <hr>
 </details>
 
 <details>
-<summary><b>Using ViVAE with cytometry data</b></summary>
+<summary><b>Using ViVAE with cytometry data (Samusik)</b></summary>
 <br>
 
-ViVAE is straightforward to use with flow and mass cytometry data.
+ViVAE, while intended mainly for scRNA-seq data, is straightforward to use with flow and mass cytometry data as well.
+
 Its structure-preserving properties are especially advantageous if global structures are of interest.
 Additionally, ViVAE integrates with FlowSOM to provide a graph-based view of cytometry datasets.
 
-We provide a Jupyter notebook tutorial [here](https://github.com/saeyslab/ViVAE/blob/main/example_cytometry.ipynb) here that covers importing and pre-processing of data, denoising, dimensionality reduction and evaluation of the resulting embedding.
+We provide a Jupyter notebook tutorial (`tutorials/example_cytometry.ipynb`) that covers importing and pre-processing of data, denoising, dimensionality reduction and some evaluation of the resulting embedding.
 
-In addition, our [R installation vignette](https://github.com/saeyslab/ViVAE/blob/main/example_r.Rmd) shows how to use ViVAE denoising and dimensionality reduction from R.
+Our R installation vignette (`tutorials/example_r.Rmd`) shows how to use ViVAE denoising and dimensionality reduction from R.
+
+</details>
+
+<hr>
+
+## Case studies
+
+We provide Jupyter notebooks with various case studies that use ViVAE to analyse single-cell datasets in the `case_studies` directory.
+These case studies are described further in our publication.
+
+<details>
+<summary><b>Breast immune cells transcriptome study (Reed)</b></summary>
+
+`case_study_reed.ipynb` provides code to reproduce the (*Reed*)[https://cellxgene.cziscience.com/collections/48259aa8-f168-4bf5-b797-af8e88da6637] dataset case study from our paper.
+This dataset comes from the Human Breast Cell Atlas.
+The authors provide labels for various leukocyte populations.
+
+We compare ViVAE with t-SNE and UMAP and describe embedding errors per cell population using the Extended Neighbourhood-Proportion-Error (xNPE) and neighbourhood composition plots.
 
 <hr>
 </details>
 
-In these tutorials we cover
+<details>
+<summary><b>Developing zebrafish embryos transcriptome study (Farrell)</b></summary>
 
-* import of input files
-* standard pre-processing workflow
-* dimensionality reduction and hyperparameter tuning
-* integration of ViVAE with FlowSOM
-* encoder indicatrices for detection of localised distortions
-* evaluation of structure preservation with [ViScore](https://github.com/saeyslab/ViScore)
-* evaluation of distortions of annotated populations with ViScore using the xNPE scoring metric
-* saving and loading trained ViVAE models
+`case_study_farrell.ipynb` provides code to reproduce the (*Farrell*)[https://singlecell.broadinstitute.org/single_cell/study/SCP162/single-cell-reconstruction-of-developmental-trajectories-during-zebrafish-embryogenesis] dataset case study from our paper.
+This dataset contains cells from multiple stages of zebrafish embryo development.
+The authors provide labels of distinct cell lineages.
+
+We compare t-SNE, UMAP, a vanilla VAE, default ViVAE and ViVAE-EncoderOnly (a decoder-less model that implements parametric stochastic MDS with GPU acceleration).
+We use encoder indicatrices to describe different manners of latent space distortion by the three VAE-based models.
+
+<hr>
+</details>
+
+<details>
+<summary><b>Mouse bone marrow CyTOF dataset study (Samusik)</b></summary>
+
+`case_study_samusik.ipynb` provides code to reproduce the (*Samusik*)[https://pubmed.ncbi.nlm.nih.gov/27183440/] dataset case study from our paper.
+This is a popular reference dataset for showcasing dimensionality reduction and clustering tools.
+The authors provide labels for various immune cell populations.
+
+We use ViVAE to create a nice embedding of the data, then use FlowSOM for clustering (independent of the dimension reduction) and show a plot of the embedding with the FlowSOM minimum spanning tree (MST) superimposed.
+
+To explore more options for evaluating cytometry data embeddings and integrating FlowSOM for informative visualisation, we refer you to the cytometry analysis tutorial in `tutorials/example_cytometry.ipynb`.
+
+<hr>
+</details>
+
+<hr>
 
 ## Benchmarking
 
