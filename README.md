@@ -1,4 +1,4 @@
-<img src="./ViVAE_logo_small.png" alt="ViVAE" width="450"/>
+<img src="./logo.png" alt="ViVAE" width="350"/>
 
 ViVAE (*vee-vay*) is a toolkit for single-cell data denoising and dimensionality reduction.
 
@@ -13,6 +13,16 @@ We are heavily re-working the pre-print right now!
 * ViVAE implements encoder indicatrices: a tool to measure local distortions of latent space.
 * ViVAE integrates with [FlowSOM](https://github.com/saeyslab/FlowSOM_Python) for visualisation.
 * ViVAE is a parametric model, enabling transfer learning and embedding of new points.
+
+<details>
+<summary><b>Schematic overview of ViVAE and ViScore</b></summary>
+<br>
+
+<img src="./overview.png" alt="ViVAE" width="900"/>
+
+</details>
+
+<hr>
 
 ## Installation
 
