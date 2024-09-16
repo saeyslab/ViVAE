@@ -67,8 +67,10 @@ def plot_embedding(
     values: Optional[np.ndarray] = None,
     s: float = 0.05,
     equal_axis_scales: bool = True,
+    label_axes: bool = True,
     fsom = None,
     fsom_background_alpha: float = 0.35,
+    fsom_show_edges: bool = True,
     fsom_show_nodes: bool = True,
     fsom_view: Optional[str] = 'labels',
     fsom_markers: Optional[List] = None,
@@ -119,11 +121,13 @@ def plot_embedding(
         values (np.ndarray, optional): Pointwise values (alternative to `labels`). Defaults to None.
         s (float, optional): Point size. Defaults to 0.05.
         equal_axis_scales (bool, optional): Whether x-axis and y-axis should use the same scale. Defaults to True.
+        label_axes (bool, optional): Whether axes should be labelled. This is only correct for determining coordinates of cell subsets for further discovery, never for publication purposes (the two axes are not interpretable components). Defaults to False.
         fsom (flowsom.main.FlowSOM, optional): FlowSOM model trained on input high-dimensional data. Defaults to None.
         fsom_background_alpha (float, optional): Opacity of embedding points if FlowSOM tree is plotted over them. Deafults to 0.35.
         fsom_view (str, optional): One of 'labels', 'markers', 'clusters', 'metaclusters' or None for FlowSOM tree view mode. Defaults to 'labels'.
         fsom_markers (List, optional): One or more markers (or channels or feature indices) in the FlowSOM model to plot cluster-wise intensities for, instead of population proportions. Defaults to None.
         fsom_show_nodes (bool, optional): Whether to show nodes of FlowSOM tree. Defaults to True (unless no labels or markers are specified).
+        fsom_show_edges (bool, optional): Whether to show edges of FlowSOM tree. Defaults to True (unless no FlowSOM model with MST is specified).
         fsom_node_scale (float, optional): Scaling factor for size of FlowSOM tree nodes. Defaults to 0.003.
         fsom_edge_scale (float, optional): Scaling factor for size of FlowSOM tree edges. Defaults to 0.8
         fsom_text_size (float, optional): Text size if `fsom_view` is 'clusters' or 'metaclusters'. Defaults to 6.
@@ -145,7 +149,8 @@ def plot_embedding(
     else:
         alpha = 1.
 
-    ax.tick_params(axis='both', labelbottom=False, labelleft=False, bottom=False, left=False)
+    if not label_axes:
+        ax.tick_params(axis='both', labelbottom=False, labelleft=False, bottom=False, left=False)
     ax.axis('equal')
 
     if labels is not None:
@@ -217,7 +222,8 @@ def plot_embedding(
         mst.set_edgecolor('black')
         mst.set_linewidth(fsom_edge_scale)
         #mst.set_zorder(0)
-        ax.add_collection(mst)
+        if fsom_show_edges:
+            ax.add_collection(mst)
         if fsom_show_nodes:
             # Add FlowSOM tree nodes
             nodes = [Circle((row[0], row[1]), node_sizes.iloc[i]) for i, row in enumerate(layout)]
