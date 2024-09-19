@@ -67,7 +67,7 @@ def plot_embedding(
     values: Optional[np.ndarray] = None,
     s: float = 0.05,
     equal_axis_scales: bool = True,
-    label_axes: bool = True,
+    label_axes: bool = False,
     fsom = None,
     fsom_background_alpha: float = 0.35,
     fsom_show_edges: bool = True,
