@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from typing import Optional, Union, List, Dict
+from typing import Optional, Union, List, Dict, Callable
 
 import random
 import numpy as np
@@ -76,7 +76,9 @@ class ViVAE:
         lam_mds: float = 100.,
         mds_distf_hd: str = 'euclidean',
         mds_distf_ld: str = 'euclidean',
-        mds_nsamp: int = 4
+        mds_nsamp: int = 4,
+        lam_imit: float = 0.,
+        ref_model: Optional[Callable] = None
     ) -> Dict:
         """Train for one epoch
 
@@ -89,7 +91,8 @@ class ViVAE:
             mds_distf_hd (str, optional): Input-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_distf_ld (str, optional): Latent-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 4.
-
+            lam_imit (float, optional): Weight of imitation loss term. Defaults to 0.
+            ref_model (Callable, optional): Reference function to imitate if imitation loss is used. Callable that encodes an input tensor of data. Defaults to None.
         Returns:
             Dict: Losses.
         """
@@ -102,6 +105,7 @@ class ViVAE:
         geom_error = 0.
         egeom_error = 0.
         mds_error = 0.
+        imit_error = 0.
 
         for _, x in enumerate(self.data_loader):
             x = x[0]
@@ -109,7 +113,8 @@ class ViVAE:
             model_loss = self.net(
                 x, lam_recon=lam_recon, lam_kldiv=lam_kldiv, lam_geom=lam_geom,
                 lam_egeom=lam_egeom, lam_mds=lam_mds, mds_distf_hd=mds_distf_hd,
-                mds_distf_ld=mds_distf_ld, mds_nsamp=mds_nsamp
+                mds_distf_ld=mds_distf_ld, mds_nsamp=mds_nsamp, lam_imit=lam_imit,
+                ref_model=ref_model
             )
 
             recon = model_loss['recon']
@@ -134,6 +139,10 @@ class ViVAE:
                 mds = model_loss['mds']
                 mds_error += mds.item()
                 loss += mds
+            if model_loss['imit'] is not None:
+                imit = model_loss['imit']
+                imit_error += imit.item()
+                loss += imit
 
             self.optimizer.zero_grad()
             loss.backward()
@@ -141,7 +150,7 @@ class ViVAE:
 
         return {
             'recon': recon_error, 'kldiv': kldiv_error, 'geom': geom_error,
-            'egeom': egeom_error, 'mds': mds_error
+            'egeom': egeom_error, 'mds': mds_error, 'imit': imit_error
         }
 
     def fit(
@@ -159,6 +168,8 @@ class ViVAE:
         mds_distf_hd: str = 'euclidean',
         mds_distf_ld: str = 'euclidean',
         mds_nsamp: int = 4,
+        lam_imit: float = 0.,
+        ref_model: Optional[Callable] = None,
         verbose: bool = True
     ):
         """Fit model to data
@@ -177,6 +188,8 @@ class ViVAE:
             mds_distf_hd (str, optional): Input-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_distf_ld (str, optional): Latent-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 4.
+            lam_imit (float, optional): Weight of imitation loss term. Defaults to 0.
+            ref_model (Callable, optional): Reference function to imitate if imitation loss is used. Callable that encodes an input tensor of data. Defaults to None.
             verbose (bool, optional): Whether to print training progress info. Defaults to True.
         """
         
@@ -209,10 +222,11 @@ class ViVAE:
             losses = self.train_epoch(
                 lam_recon=lam_recon, lam_kldiv=lam_kldiv, lam_geom=lam_geom,
                 lam_egeom=lam_egeom, lam_mds=lam_mds, mds_distf_hd=mds_distf_hd,
-                mds_distf_ld=mds_distf_ld, mds_nsamp=mds_nsamp
+                mds_distf_ld=mds_distf_ld, mds_nsamp=mds_nsamp, lam_imit=lam_imit,
+                ref_model=ref_model
             )
             if verbose:
-                print(f"Epoch {epoch}/{n_epochs}\trecon: {losses['recon']/epoch:.4f}\tkldiv: {losses['kldiv']/epoch:.4f}\tgeom: {losses['geom']/epoch:.4f}\tegeom: {losses['egeom']/epoch:.4f}\tmds: {losses['mds']/epoch:.4f}")
+                print(f"Epoch {epoch}/{n_epochs}\trecon: {losses['recon']/epoch:.4f}\tkldiv: {losses['kldiv']/epoch:.4f}\tgeom: {losses['geom']/epoch:.4f}\tegeom: {losses['egeom']/epoch:.4f}\tmds: {losses['mds']/epoch:.4f}\timit: {losses['imit']/epoch:.4f}")
 
         self.trained = True
         if lam_recon>0.:
@@ -249,6 +263,8 @@ class ViVAE:
         mds_distf_hd: str = 'euclidean',
         mds_distf_ld: str = 'euclidean',
         mds_nsamp: int = 4,
+        lam_imit: float = 0.,
+        ref_model: Optional[Callable] = None,
         verbose: bool = True
     ):
         """Fit model to data and transform data
@@ -267,13 +283,16 @@ class ViVAE:
             mds_distf_hd (str, optional): Input-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_distf_ld (str, optional): Latent-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 4.
+            lam_imit (float, optional): Weight of imitation loss term. Defaults to 0.
+            ref_model (Callable, optional): Reference function to imitate if imitation loss is used. Callable that encodes an input tensor of data. Defaults to None.
             verbose (bool, optional): Whether to print training progress info. Defaults to True.
         """
         self.fit(
             X, n_epochs=n_epochs, batch_size=batch_size, learning_rate=learning_rate,
             weight_decay=weight_decay, lam_recon=lam_recon, lam_kldiv=lam_kldiv,
             lam_geom=lam_geom, lam_egeom=lam_egeom, lam_mds=lam_mds, mds_distf_hd=mds_distf_hd,
-            mds_distf_ld=mds_distf_ld, mds_nsamp=mds_nsamp, verbose=verbose
+            mds_distf_ld=mds_distf_ld, mds_nsamp=mds_nsamp, lam_imit=lam_imit, ref_model=ref_model,
+            verbose=verbose
         )
         return self.transform(X, batch_size=batch_size)
 

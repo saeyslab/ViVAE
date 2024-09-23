@@ -15,7 +15,7 @@ limitations under the License.
 """
 
 from collections import OrderedDict
-from typing import List, Dict, Union, Optional
+from typing import List, Dict, Union, Optional, Callable
 
 import numpy as np
 
@@ -24,7 +24,7 @@ torch.use_deterministic_algorithms(True)
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from .losses import KLDivLoss, MDSLoss, GeometricLoss, EncoderGeometricLoss
+from .losses import KLDivLoss, MDSLoss, GeometricLoss, EncoderGeometricLoss, ImitationLoss
 
 class Autoencoder(nn.Module):
     """Autoencoder model"""
@@ -89,6 +89,9 @@ class Autoencoder(nn.Module):
 
         ## Specify MDS error computed using the stochastic-MDS loss algorithm
         self.mds_error = MDSLoss()
+
+        ## Specify imitation error computed using the L2 imitation loss
+        self.imit_error = ImitationLoss()
 
     def reparameterise(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
         """Reparameterisation trick
@@ -197,7 +200,9 @@ class Autoencoder(nn.Module):
             lam_mds: float = 0.,
             mds_distf_hd: str = 'euclidean',
             mds_distf_ld: str = 'euclidean',
-            mds_nsamp: int = 4
+            mds_nsamp: int = 4,
+            lam_imit: float = 0.,
+            ref_model: Optional[Callable] = None
         ) -> Dict:
         """Run forward pass
 
@@ -221,7 +226,8 @@ class Autoencoder(nn.Module):
             mds_distf_hd (str, optional): Input-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_distf_ld (str, optional): Latent-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 4.
-        
+            lam_imit (float, optional): Weight of imitation loss term. Defaults to 0.
+            ref_model (Callable, optional): Reference function to imitate if imitation loss is used. Callable that encodes an input tensor of data. Defaults to None.
         Returns:
             Dict: Losses.
         """
@@ -242,6 +248,7 @@ class Autoencoder(nn.Module):
         l_geom = None
         l_egeom = None
         l_mds = None
+        l_imit = None
         if lam_recon>0.:
             l_recon = lam_recon*self.reconstruction_error(x, xhat)
         if lam_geom>0.:
@@ -250,7 +257,9 @@ class Autoencoder(nn.Module):
             l_egeom = lam_egeom*self.encoder_geometric_error(self.submersion, x)
         if lam_mds>0.:
             l_mds = lam_mds*self.mds_error(x, z, distf_hd=mds_distf_hd, distf_ld=mds_distf_ld, n_sampling=mds_nsamp)
-        return {'recon': l_recon, 'kldiv': l_kldiv, 'geom': l_geom, 'egeom': l_egeom, 'mds': l_mds}
+        if lam_imit>0. and ref_model is not None:
+            l_imit = lam_imit*self.imit_error(x, z, ref_model)
+        return {'recon': l_recon, 'kldiv': l_kldiv, 'geom': l_geom, 'egeom': l_egeom, 'mds': l_mds, 'imit': l_imit}
     
     def embed(self, x: Union[np.ndarray, torch.Tensor], batch_size: Optional[int] = 256) -> np.ndarray:
         """Generate an embedding of data

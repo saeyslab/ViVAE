@@ -60,6 +60,43 @@ import torch
 ## This may be slower, but helps with reproducibility.
 torch.use_deterministic_algorithms(True)
 
+class ImitationLoss():
+    """Imitation loss
+
+    Encourages encoding to become similar to a reference embedding by minimising L2 distances.
+    This can be used for initialising an autoencoder network for increased stability.
+    """
+    def __init__(self):
+        pass
+    def __call__(self, x: torch.Tensor, z: torch.Tensor, ref_model: Callable):
+        """Compute imitation loss
+
+        Args:
+            x (torch.Tensor): Input points.
+            z (torch.Tensor): Embedding of input points.
+            ref_model (Callable): Reference model that transforms `x`.
+        
+        Returns:
+            torch.Tensor: Loss value averaged across batch.
+        """
+
+        z_ref = ref_model(x)
+        l2 = torch.sqrt(torch.maximum(torch.sum(torch.square(z-z_ref), dim=1, keepdim=False), torch.Tensor([1e-9])))
+        res = torch.mean(l2)
+        return res
+
+class FirstNDimsExtractor():
+    """First-n-dimensions extractor
+    
+    A trivial reference model that extracts the first few features of a dataset as its embedding.
+    If the input data is PCA-reduced, this amounts to extracting top principal components of data.
+    """
+    def __init__(self, latent_dim: int):
+        self.latent_dim = latent_dim
+
+    def __call__(self, x):
+        return x[:,range(self.latent_dim)]
+
 class KLDivLoss():
     """KL divergece loss
 
