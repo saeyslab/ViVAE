@@ -31,6 +31,14 @@ class Autoencoder(nn.Module):
     def __init__(self, input_dim: int, latent_dim: int = 2, hidden_dims: List[int] = [100, 100, 100], variational: bool = False, activation=nn.GELU()):
         """Autoencoder model
 
+        This is a generalised class for a vanilla autoencoder (AE) or a variational autoencoder (VAE).
+        The difference is governed by the argument `variational`.
+
+        Reconstruction error is computed as the mean squared error (MSE).
+        MSE is chosen due to its sensitivity to outliers (relative to binary cross-entropy), which encourages robustness.
+
+        Default activation function is GELU, chosen as an as established smoother alternative to ReLU.
+
         Args:
             input_dim (int): Dimension of input data.
             latent_dim (int, optional): Dimension of latent space. Defaults to 2.
@@ -45,6 +53,7 @@ class Autoencoder(nn.Module):
         self.latent_dim = latent_dim
         self.input_dim = input_dim
 
+        ## Put together an encoder using an OrderedDict
         enc_layers = OrderedDict()
         prev_dim = input_dim
         for idx, hidden_dim in enumerate(hidden_dims):
@@ -59,6 +68,7 @@ class Autoencoder(nn.Module):
         else:
             enc_layers[f'{(idx+2):02d}EncoderPotential'] = nn.Linear(prev_dim, latent_dim)
 
+        ## Put together a decoder using an OrderedDict
         dec_layers = OrderedDict()
         prev_dim = latent_dim
         for idx, hidden_dim in enumerate(reversed(hidden_dims)):
@@ -70,21 +80,25 @@ class Autoencoder(nn.Module):
         self.encoder = nn.Sequential(enc_layers)
         self.decoder = nn.Sequential(dec_layers)
 
+        ## Specify reconstruction error computed using MSE
         self.reconstruction_error = nn.MSELoss()
         
+        ## Specify geometric and encoder-geometric error (experimental)
         self.geometric_error = GeometricLoss()
         self.encoder_geometric_error = EncoderGeometricLoss()
 
+        ## Specify MDS error computed using the stochastic-MDS loss algorithm
         self.mds_error = MDSLoss()
 
     def reparameterise(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
         """Reparameterisation trick
 
-        Obtains indirect sample from latent space.
+        Obtains an indirect sample from a VAE latent space.
+        Maintains a probabilistic latent space.
 
         Args:
             mu (torch.Tensor): Latent means.
-            logvar (torch.Tensor): Latent log-variance.
+            logvar (torch.Tensor): Latent log-variances.
 
         Returns:
             torch.Tensor: Latent space sample.
@@ -97,11 +111,25 @@ class Autoencoder(nn.Module):
     def encode(self, x: torch.Tensor):
         """Encode data
 
+        Uses a trained encoder module to yield a latent-space embedding of data from input space.
+        This data should come from the same domain as the original training data.
+
+        If the model is a vanilla AE, a single latent representation (embedding) of data is returned.
+        If the model is a VAE, this returns a list of
+        - latent means (`mu`),
+        - latent log-variances (`sigma`),
+        - the latent-space sample (`z`).
+
+        Note that `z` contains Gaussian-sampled noise.
+        `z` is used in training to propagate error through the probabilistic model.
+        To obtain an embedding of data for visualisation or downstream processing, use `mu`, which is non-noisy.
+
         Args:
             x (torch.Tensor): Input.
 
         Returns:
-            torch.Tensor: Single latent representation (embedding) if not variational, otherwise latent means, latent log-variances and latent space sample.
+            - if `variational` is `False`: torch.Tensor object
+            - if `variational` is `True`: a list of 3 torch.Tensor objects (`mu`, `sigma`, `z`)
         """
         enc = self.encoder(x)
         if not self.variational:
@@ -115,6 +143,7 @@ class Autoencoder(nn.Module):
         """Submersion function
 
         Smooth mapping between manifolds (higher-dimensional to lower-dimensional) with surjective derivative.
+        This is the encoder in its functional form.
 
         Args:
             x (torch.Tensor): Points on higher-dimensional manifold.
@@ -131,6 +160,10 @@ class Autoencoder(nn.Module):
     def decode(self, z: torch.Tensor) -> torch.Tensor:
         """Decode latent representation
 
+        Uses a trained decoder module to yield a reconstruction of points from latent space in the original input space.
+        If the model is a vanilla AE, the latent space is deterministic and its behaviour outside the domain of previously encoded points may be quite odd.
+        If the model is a VAE, the latent space is probabilistic and its behaviour outside this domain may be interesting.
+
         Args:
             z (torch.Tensor): Latent representation (embedding).
 
@@ -144,6 +177,7 @@ class Autoencoder(nn.Module):
         """Immersion function
 
         Smooth mapping between manifolds (lower-dimensional to higher-dimensional) with injective derivative.
+        This is the decoder in its functional form.
 
         Args:
             z (torch.Tensor): Points on lower-dimensional manifold.
@@ -163,9 +197,19 @@ class Autoencoder(nn.Module):
             lam_mds: float = 0.,
             mds_distf_hd: str = 'euclidean',
             mds_distf_ld: str = 'euclidean',
-            mds_nsamp: int = 5
+            mds_nsamp: int = 4
         ) -> Dict:
         """Run forward pass
+
+        Runs a forward pass through an autoencoder model.
+        This returns a dictionary of all the different loss terms, which are differentiable and can therefore be used in back-propagation to train the model.
+        A weight value of 0 or more is assigned to each term, which governs its coefficient in the aggregate loss function.
+        
+        If a weight of 0 is assigned to any loss term, its computation is skipped, speeding up the forward pass.
+
+        Specifically, if a weight of 0 is assigned to the reconstruction error (`lam_recon=0.`), the decoder of the model is not trained at all.
+
+        The weight for divergence from latent prior (`lam_kldiv`) is ignored if the autoencoder is not variational.
 
         Args:
             x (torch.Tensor): Input.
@@ -176,18 +220,23 @@ class Autoencoder(nn.Module):
             lam_mds (float, optional): Weight of MDS loss term. Defaults to 0.
             mds_distf_hd (str, optional): Input-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_distf_ld (str, optional): Latent-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
-            mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 5.
+            mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 4.
         
         Returns:
             Dict: Losses.
         """
+
+        ## Encode input data
         l_kldiv = None
         if self.variational:
             mu, logvar, z = self.encode(x)
             l_kldiv = lam_kldiv*self.kldiv_error(mu, logvar)
         else:
             z = self.encode(x)
-        xhat = self.decode(z)
+        
+        ## Decode latent representation if needed
+        if lam_recon>0.:
+            xhat = self.decode(z)
 
         l_recon = None
         l_geom = None
@@ -204,11 +253,16 @@ class Autoencoder(nn.Module):
         return {'recon': l_recon, 'kldiv': l_kldiv, 'geom': l_geom, 'egeom': l_egeom, 'mds': l_mds}
     
     def embed(self, x: Union[np.ndarray, torch.Tensor], batch_size: Optional[int] = 256) -> np.ndarray:
-        """Generate embedding of data
+        """Generate an embedding of data
+
+        Uses trained encoder to creates an embedding of input data in the model latent space.
+        The input data should come from the same domain as the data on which the model was trained.
+
+        The data can be passed through the encoder in batches or all at once.
 
         Args:
             x (Union[np.ndarray, torch.Tensor]): Input data.
-            batch_size (Optional[int]): Optional batch size if the data should be passed through the model in batches (or None to pass at once). Defaults to 256.
+            batch_size (Optional[int]): Optional batch size (or None to transform all at once). Defaults to 256.
 
         Returns:
             np.ndarray: Embedding in latent space.
