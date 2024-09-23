@@ -80,6 +80,8 @@ Advantages and potential pitfalls of smooth embeddings are described and discuss
 
 The tutorial is provided as a Jupyter notebook (`tutorials/example_scrnaseq.ipynb`).
 
+We also provide a short tutorial on biasing the ViVAE model using imitation (`tutorials/imitation.ipynb`)
+
 <hr>
 </details>
 
