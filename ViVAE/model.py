@@ -74,7 +74,8 @@ class ViVAE:
         lam_geom: float = 0.,
         lam_egeom: float = 0.,
         lam_mds: float = 100.,
-        mds_distf: str = 'euclidean',
+        mds_distf_hd: str = 'euclidean',
+        mds_distf_ld: str = 'euclidean',
         mds_nsamp: int = 4
     ) -> Dict:
         """Train for one epoch
@@ -85,7 +86,8 @@ class ViVAE:
             lam_geom (float, optional): Weight of geometric loss term. Defaults to 0.
             lam_egeom (float, optional): Weight of encoder-geometric loss term. Defaults to 0.
             lam_mds (float, optional): Weight of MDS loss term. (We recommend 100 for scRNA-seq data and 10 for cytometry data.) Defaults to 100.
-            mds_distf (str, optional): Distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
+            mds_distf_hd (str, optional): Input-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
+            mds_distf_ld (str, optional): Latent-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 4.
 
         Returns:
@@ -106,8 +108,8 @@ class ViVAE:
             self.net.train()
             model_loss = self.net(
                 x, lam_recon=lam_recon, lam_kldiv=lam_kldiv, lam_geom=lam_geom,
-                lam_egeom=lam_egeom, lam_mds=lam_mds, mds_distf=mds_distf,
-                mds_nsamp=mds_nsamp
+                lam_egeom=lam_egeom, lam_mds=lam_mds, mds_distf_hd=mds_distf_hd,
+                mds_distf_ld=mds_distf_ld, mds_nsamp=mds_nsamp
             )
 
             recon = model_loss['recon']
@@ -154,7 +156,8 @@ class ViVAE:
         lam_geom: float = 0.,
         lam_egeom: float = 0.,
         lam_mds: float = 100.,
-        mds_distf: str = 'euclidean',
+        mds_distf_hd: str = 'euclidean',
+        mds_distf_ld: str = 'euclidean',
         mds_nsamp: int = 4,
         verbose: bool = True
     ):
@@ -171,7 +174,8 @@ class ViVAE:
             lam_geom (float, optional): Weight of geometric loss term. Defaults to 0.
             lam_egeom (float, optional): Weight of encoder-geometric loss term. Defaults to 0.
             lam_mds (float, optional): Weight of MDS loss term. (We recommend 100 for scRNA-seq data and 10 for cytometry data.) Defaults to 100.
-            mds_distf (str, optional): Distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
+            mds_distf_hd (str, optional): Input-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
+            mds_distf_ld (str, optional): Latent-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 4.
             verbose (bool, optional): Whether to print training progress info. Defaults to True.
         """
@@ -204,8 +208,8 @@ class ViVAE:
         for epoch in range(1, n_epochs+1):
             losses = self.train_epoch(
                 lam_recon=lam_recon, lam_kldiv=lam_kldiv, lam_geom=lam_geom,
-                lam_egeom=lam_egeom, lam_mds=lam_mds, mds_distf=mds_distf,
-                mds_nsamp=mds_nsamp
+                lam_egeom=lam_egeom, lam_mds=lam_mds, mds_distf_hd=mds_distf_hd,
+                mds_distf_ld=mds_distf_ld, mds_nsamp=mds_nsamp
             )
             if verbose:
                 print(f"Epoch {epoch}/{n_epochs}\trecon: {losses['recon']/epoch:.4f}\tkldiv: {losses['kldiv']/epoch:.4f}\tgeom: {losses['geom']/epoch:.4f}\tegeom: {losses['egeom']/epoch:.4f}\tmds: {losses['mds']/epoch:.4f}")
@@ -242,7 +246,8 @@ class ViVAE:
         lam_geom: float = 0.,
         lam_egeom: float = 0.,
         lam_mds: float = 100.,
-        mds_distf: str = 'euclidean',
+        mds_distf_hd: str = 'euclidean',
+        mds_distf_ld: str = 'euclidean',
         mds_nsamp: int = 4,
         verbose: bool = True
     ):
@@ -259,15 +264,16 @@ class ViVAE:
             lam_geom (float, optional): Weight of geometric loss term. Defaults to 0.
             lam_egeom (float, optional): Weight of encoder-geometric loss term. Defaults to 0.
             lam_mds (float, optional): Weight of MDS loss term. (We recommend 100 for scRNA-seq data and 10 for cytometry data.) Defaults to 100.
-            mds_distf (str, optional): Distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
+            mds_distf_hd (str, optional): Input-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
+            mds_distf_ld (str, optional): Latent-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 4.
             verbose (bool, optional): Whether to print training progress info. Defaults to True.
         """
         self.fit(
             X, n_epochs=n_epochs, batch_size=batch_size, learning_rate=learning_rate,
             weight_decay=weight_decay, lam_recon=lam_recon, lam_kldiv=lam_kldiv,
-            lam_geom=lam_geom, lam_egeom=lam_egeom, lam_mds=lam_mds, mds_distf=mds_distf,
-            mds_nsamp=mds_nsamp, verbose=verbose
+            lam_geom=lam_geom, lam_egeom=lam_egeom, lam_mds=lam_mds, mds_distf_hd=mds_distf_hd,
+            mds_distf_ld=mds_distf_ld, mds_nsamp=mds_nsamp, verbose=verbose
         )
         return self.transform(X, batch_size=batch_size)
 
