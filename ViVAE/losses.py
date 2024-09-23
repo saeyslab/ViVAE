@@ -64,7 +64,7 @@ class ImitationLoss():
     """Imitation loss
 
     Encourages encoding to become similar to a reference embedding by minimising L2 distances.
-    This can be used for initialising an autoencoder network for increased stability.
+    This can be used for initialising or biasing an (auto)encoder network.
     """
     def __init__(self):
         pass
