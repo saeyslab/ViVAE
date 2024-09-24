@@ -80,8 +80,6 @@ Advantages and potential pitfalls of smooth embeddings are described and discuss
 
 The tutorial is provided as a Jupyter notebook (`tutorials/example_scrnaseq.ipynb`).
 
-We also provide a short tutorial on biasing the ViVAE model using imitation (`tutorials/imitation.ipynb`)
-
 <hr>
 </details>
 
@@ -97,6 +95,19 @@ Additionally, ViVAE integrates with FlowSOM to provide a graph-based view of cyt
 We provide a Jupyter notebook tutorial (`tutorials/example_cytometry.ipynb`) that covers importing and pre-processing of data, denoising, dimensionality reduction and some evaluation of the resulting embedding.
 
 Our R installation vignette (`tutorials/example_r.Rmd`) shows how to use ViVAE denoising and dimensionality reduction from R.
+
+<hr>
+</details>
+
+<details>
+<summary><b>Interesting modifications of the ViVAE model</b></summary>
+<br>
+
+Some additional examples of modifications to the ViVAE model are provided:
+
+* PCA initialisation or general approximation of other DR models using **imitation loss**: `tutorials/imitation.ipynb`.
+
+* Using stochastic-MDS loss with **cosine distances** in input space: `tutorials/cosine.ipynb`.
 
 </details>
 
