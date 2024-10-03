@@ -2,21 +2,26 @@
 
 ViVAE (*vee-vay*) is a toolkit for single-cell data denoising and dimensionality reduction.
 
-It is published together with **[ViScore](https://github.com/saeyslab/ViScore)**, a collection of tools for evaluation of dimensionality reduction.
-Our [pre-print](https://www.biorxiv.org/content/10.1101/2023.11.23.568428v2) uses an [older version](https://github.com/saeyslab/ViVAE_old) of ViVAE.
-We are heavily re-working the pre-print right now!
+It is published together with **[ViScore](https://github.com/saeyslab/ViScore)**, a framework tools for fair and scalable evaluation of dimensionality reduction.
+Check out the associated [paper](https://www.biorxiv.org/content/10.1101/2023.11.23.568428v3): *Interpretable models for scRNA-seq data embedding with multi-scale structure preservation*, where we describe and validate our methods in-depth.
 
 <img src="./overview.png" alt="overview" width="900"/>
 
 ## Why use ViVAE
 
-* ViVAE strikes a favourable balance between local and global structure preservation.
-    * This is especially good for data with trajectories, outlier populations or suspected batch effects.
-* ViVAE implements encoder indicatrices: a tool to measure local distortions of latent space.
-* ViVAE integrates with [FlowSOM](https://github.com/saeyslab/FlowSOM_Python) for visualisation.
-* ViVAE is a parametric model, enabling transfer learning and embedding of new points.
+* ViVAE achieves state-of-the-art multi-scale structure preservation.
+    * This is especially, but not exclusively, suitable for data with trajectories, outlier populations or suspected batch effects.
+* Our embedding model implements encoder indicatrices: a tool to measure local distortions of latent space.
+* We integrate ViVAE with [FlowSOM](https://github.com/saeyslab/FlowSOM_Python) for visualisation.
+* The ViVAE model is parametric, enabling transfer learning and embedding of new points.
+* ViVAE can take advantage of modern GPU architectures, especially for training on large datasets.
 
-## Installation
+## Setting up
+
+For most datasets, ViVAE can be run on a consumer laptop.
+Availability of a GPU is a significant boost.
+
+To try out ViVAE without installing it locally, follow the tutorial in `tutorials/example_scrnaseq.ipynb` to use ViVAE in [Google Colab](https://colab.research.google.com).
 
 <details>
 <summary><b>Python installation</b></summary>
@@ -65,6 +70,9 @@ In the meantime, to install and run ViVAE in R using [reticulate](https://rstudi
 
 ## Tutorials
 
+Our tutorials will help you start using ViVAE quickly, be it with scRNA-seq or cytometry data.
+The tutorials include data pre-processing, discuss the most important hyperparameters of ViVAE and touch on evaluation of embeddings using [ViScore](https://github.com/saeyslab/ViScore).
+
 <details>
 <summary><b>Using ViVAE with scRNA-seq data</b></summary>
 <br>
@@ -99,6 +107,8 @@ Our R installation vignette (`tutorials/example_r.Rmd`) shows how to use ViVAE d
 <hr>
 </details>
 
+We also showcase some experimental modifications of the model that will mostly be interesting for developers of dimensionality reduction algorithms, below.
+
 <details>
 <summary><b>Interesting modifications of the ViVAE model</b></summary>
 <br>
@@ -113,8 +123,8 @@ Some additional examples of modifications to the ViVAE model are provided:
 
 ## Case studies
 
-We provide Jupyter notebooks with various case studies that use ViVAE to analyse single-cell datasets in the `case_studies` directory.
-These case studies are described further in our publication.
+The associated manuscript presents case studies on various single-cell datasets.
+These case studies are replicated using Jupyter notebooks in the `case_studies` directory.
 
 <details>
 <summary><b>Breast immune cells transcriptome study (Reed)</b></summary>
@@ -124,7 +134,7 @@ These case studies are described further in our publication.
 This dataset comes from the Human Breast Cell Atlas.
 The authors provide labels for various leukocyte populations.
 
-We compare ViVAE with t-SNE and UMAP and describe embedding errors per cell population using the Extended Neighbourhood-Proportion-Error (xNPE) and neighbourhood composition plots.
+We compare ViVAE with *t*-SNE and UMAP and describe embedding errors per cell population using the Extended Neighbourhood-Proportion-Error (xNPE) and neighbourhood composition plots.
 
 <hr>
 </details>
@@ -137,7 +147,8 @@ We compare ViVAE with t-SNE and UMAP and describe embedding errors per cell popu
 This dataset contains cells from multiple stages of zebrafish embryo development.
 The authors provide labels of distinct cell lineages.
 
-We compare t-SNE, UMAP, a vanilla VAE, default ViVAE and ViVAE-EncoderOnly (a decoder-less model that implements parametric stochastic MDS with GPU acceleration).
+We compare *t*-SNE, UMAP, a vanilla VAE, default ViVAE and ViVAE-EncoderOnly (a decoder-less model that implements parametric stochastic MDS with GPU acceleration).
+The analysis in our paper focuses on the differences between neighbour-embedding algorithms (which tend to form separate clusters) and multi-dimensional scaling algorithms (which produce more continuous represerntations).
 We use encoder indicatrices to describe different manners of latent space distortion by the three VAE-based models.
 
 <hr>
@@ -157,16 +168,9 @@ To explore more options for evaluating cytometry data embeddings and integrating
 
 </details>
 
-## Benchmarking
+## Evaluation framework
 
-We benchmark ViVAE and other DR methods in terms of local and global structure preservation, using [ViScore](https://github.com/saeyslab/ViScore).
+In our paper, we compare ViVAE and other DR methods in terms of local and global structure preservation using [ViScore](https://github.com/saeyslab/ViScore).
 The ViScore repository contains our documented [benchmarking set-up](https://github.com/saeyslab/ViScore/blob/main/benchmarking), which can be extended to other datasets and DR methods.
+This set-up includes full documentation to guide the user through the process of benchmarking or hyperparameter tuning on an HPC cluster from start to finish.
 
-## Pre-print
-
-The pre-print of our publication is available [here](https://www.biorxiv.org/content/10.1101/2023.11.23.568428v2) on bioRxiv.
-
-It describes underlying methodology of ViVAE and ViScore, reviews past work in dimensionality reduction and evaluation of it and links to publicly available datasets on which performance of ViVAE was evaluated.
-**We are heavily revising this pre-print.**
-
-The pre-print currently uses the old version of *ViVAE*, available [here](https://github.com/saeyslab/ViVAE_old).
