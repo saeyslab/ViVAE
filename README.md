@@ -174,3 +174,4 @@ In our paper, we compare ViVAE and other DR methods in terms of local and global
 The ViScore repository contains our documented [benchmarking set-up](https://github.com/saeyslab/ViScore/blob/main/benchmarking), which can be extended to other datasets and DR methods.
 This set-up includes full documentation to guide the user through the process of benchmarking or hyperparameter tuning on an HPC cluster from start to finish.
 
+<img src="https://github.com/saeyslab/ViScore/blob/main/benchmarking/schematic.png?raw=true" />
