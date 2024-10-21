@@ -2,7 +2,7 @@
 
 ViVAE (*vee-vay*) is a toolkit for single-cell data denoising and dimensionality reduction.
 
-It is published together with **[ViScore](https://github.com/saeyslab/ViScore)**, a framework tools for fair and scalable evaluation of dimensionality reduction.
+It is published together with **[ViScore](https://github.com/saeyslab/ViScore)**, a framework for fair and scalable evaluation of dimensionality reduction.
 Check out the associated [paper](https://www.biorxiv.org/content/10.1101/2023.11.23.568428v3): *Interpretable models for scRNA-seq data embedding with multi-scale structure preservation*, where we describe and validate our methods in-depth.
 
 <img src="./overview.png" alt="overview" width="900"/>
