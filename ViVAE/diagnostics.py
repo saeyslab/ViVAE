@@ -30,16 +30,17 @@ from typing import List, Union
 import math
 
 import numpy as np
-import torch
-torch.use_deterministic_algorithms(True)
-from torch.utils.data import DataLoader
+
+from ViVAE import torch, DEVICE, DEVICE_NAME
 
 from scipy.spatial import Delaunay
 
+from torch.utils.data import DataLoader
+from .mps import MPSDataLoader
 from .network import Autoencoder
 from .geometry import jacobian, metric_tensor, EncoderIndicatome, DecoderIndicatome
 
-def decoder_jacobian_determinants(model: Autoencoder, x: Union[np.ndarray, torch.Tensor], batch_size: int = 256) -> np.ndarray:
+def decoder_jacobian_determinants(model: Autoencoder, x: Union[np.ndarray, torch.tensor], batch_size: int = 256) -> np.ndarray:
     """Compute point-wise scaled Jacobian determinants for decoder
 
     For each point in our latent representation (lower-dimensional data
@@ -75,7 +76,7 @@ def decoder_jacobian_determinants(model: Autoencoder, x: Union[np.ndarray, torch
 
     Args:
         model (Autoencoder): Trained autoencoder model.
-        x (numpy.ndarray or torch.Tensor): Input dataset.
+        x (numpy.ndarray or torch.tensor): Input dataset.
         batch_size (int, optional): Batch size for forward pass of `x` through `model`. Defaults to 256.
 
     Returns:
@@ -83,9 +84,12 @@ def decoder_jacobian_determinants(model: Autoencoder, x: Union[np.ndarray, torch
     """
 
     if isinstance(x, np.ndarray):
-        x = torch.FloatTensor(x)
-    dets = torch.Tensor([])
-    loader = DataLoader(x, batch_size=batch_size, shuffle=False)
+        x = torch.tensor(x)
+    dets = torch.tensor([], device=DEVICE)
+    if DEVICE_NAME=='mps':
+        loader = MPSDataLoader(dataset=x, batch_size=batch_size, shuffle=False)
+    else:
+        loader = DataLoader(x, batch_size=batch_size, shuffle=False)
     for xx in loader:
         xx = xx[0]
         ## Get latent activations
@@ -104,12 +108,12 @@ def decoder_jacobian_determinants(model: Autoencoder, x: Union[np.ndarray, torch
     # dets = dets[torch.argwhere(~torch.isnan(dets)).squeeze()]
     rel_dets = dets/torch.abs(torch.mean(dets))
     rel_dets = rel_dets-1
-    rel_dets = rel_dets.detach().numpy()
+    rel_dets = rel_dets.detach().cpu().numpy()
     return rel_dets
 
 def encoder_indicatrices(
     model: Autoencoder,
-    x: Union[np.ndarray, torch.Tensor],
+    x: Union[np.ndarray, torch.tensor],
     batch_size: int = 256,
     radius: float = 1e-3,
     n_steps: int = 20,
@@ -161,7 +165,7 @@ def encoder_indicatrices(
 
     Args:
         model (Autoencoder): Trained Autoencoder object.
-        x (Union[np.ndarray, torch.Tensor]): Input data to `model`.
+        x (Union[np.ndarray, torch.tensor]): Input data to `model`.
         batch_size (int, optional): Batch size for forward pass of `x` through `model`. Defaults to 256.
         radius (float, optional): Circular disc radius in ambient space. Defaults ot 1e-3.
         n_steps (int, optional): Number of steps along each axis of latent representation to generate grid of indicatrices. Defaults to 20.
@@ -177,7 +181,7 @@ def encoder_indicatrices(
 
 def decoder_indicatrices(
     model: Autoencoder,
-    x: Union[np.ndarray, torch.Tensor],
+    x: Union[np.ndarray, torch.tensor],
     batch_size: int = 256,
     n_steps: int = 20,
     n_polygon: int = 50
@@ -186,7 +190,7 @@ def decoder_indicatrices(
 
     Args:
         model (Autoencoder): Trained Autoencoder object.
-        x (Union[np.ndarray, torch.Tensor]): Input data to `model`.
+        x (Union[np.ndarray, torch.tensor]): Input data to `model`.
         batch_size (int, optional): Batch size for forward pass of `x` through `model`. Defaults to 256.
         n_steps (int, optional): Number of steps along each axis of latent representation to generate grid of indicatrices. Defaults to 20.
         n_polygon (int, optional): Number of points in each polygon approximating the unit sphere in pullback metric. Defaults to 50.

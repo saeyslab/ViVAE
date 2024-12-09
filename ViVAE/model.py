@@ -18,12 +18,14 @@ from typing import Optional, Union, List, Dict, Callable
 
 import random
 import numpy as np
-import torch
+
 from torch.utils.data import DataLoader, TensorDataset
-torch.use_deterministic_algorithms(True)
+
+from ViVAE import torch, DEVICE, DEVICE_NAME
 
 from .network import Autoencoder
 from .diagnostics import decoder_jacobian_determinants, EncoderIndicatome, DecoderIndicatome, encoder_indicatrices, decoder_indicatrices
+from .mps import MPSDataLoader
 
 class ViVAE:
     """ViVAE dimension-reduction model"""
@@ -46,20 +48,27 @@ class ViVAE:
             activation (optional): Activation function (instantiated `torch` module). Defaults to `torch.nn.GELU()`.
             random_state (int, optional): Random state to use for reproducibility.
         """
-        self.net = Autoencoder(
+        self.random_state = random_state
+        if self.random_state is not None:
+            torch.cuda.manual_seed(self.random_state)
+            torch.manual_seed(self.random_state)
+
+        ae = Autoencoder(
             input_dim=input_dim, latent_dim=latent_dim, hidden_dims=hidden_dims,
             variational=variational, activation=activation
         )
+        ae.to(DEVICE)
+        self.device_name = DEVICE_NAME
+        self.net = ae
         self.data_loader = None
         self.optimizer = None
 
         self.trained = False
         self.decoder_active = False
-
-        self.random_state = random_state
+        
 
     def __repr__(self):
-        return f'ViVAE(input_dim={self.net.input_dim}, latent_dim={self.net.latent_dim})'
+        return f'ViVAE(input_dim={self.net.input_dim}, latent_dim={self.net.latent_dim}, device={self.device_name})'
     
     def __str__(self):
         trained = 'not trained'
@@ -76,7 +85,7 @@ class ViVAE:
         lam_mds: float = 100.,
         mds_distf_hd: str = 'euclidean',
         mds_distf_ld: str = 'euclidean',
-        mds_nsamp: int = 4,
+        mds_nsamp: int = 1,
         lam_imit: float = 0.,
         ref_model: Optional[Callable] = None
     ) -> Dict:
@@ -90,7 +99,7 @@ class ViVAE:
             lam_mds (float, optional): Weight of MDS loss term. (We recommend 100 for scRNA-seq data and 10 for cytometry data.) Defaults to 100.
             mds_distf_hd (str, optional): Input-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_distf_ld (str, optional): Latent-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
-            mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 4.
+            mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 1.
             lam_imit (float, optional): Weight of imitation loss term. Defaults to 0.
             ref_model (Callable, optional): Reference function to imitate if imitation loss is used. Callable that encodes an input tensor of data. Defaults to None.
         Returns:
@@ -109,7 +118,9 @@ class ViVAE:
 
         for _, x in enumerate(self.data_loader):
             x = x[0]
-            self.net.train()
+
+            self.optimizer.zero_grad()
+
             model_loss = self.net(
                 x, lam_recon=lam_recon, lam_kldiv=lam_kldiv, lam_geom=lam_geom,
                 lam_egeom=lam_egeom, lam_mds=lam_mds, mds_distf_hd=mds_distf_hd,
@@ -143,8 +154,7 @@ class ViVAE:
                 imit = model_loss['imit']
                 imit_error += imit.item()
                 loss += imit
-
-            self.optimizer.zero_grad()
+            
             loss.backward()
             self.optimizer.step()
 
@@ -167,7 +177,7 @@ class ViVAE:
         lam_mds: float = 100.,
         mds_distf_hd: str = 'euclidean',
         mds_distf_ld: str = 'euclidean',
-        mds_nsamp: int = 4,
+        mds_nsamp: int = 1,
         lam_imit: float = 0.,
         ref_model: Optional[Callable] = None,
         verbose: bool = True
@@ -187,7 +197,7 @@ class ViVAE:
             lam_mds (float, optional): Weight of MDS loss term. (We recommend 100 for scRNA-seq data and 10 for cytometry data.) Defaults to 100.
             mds_distf_hd (str, optional): Input-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_distf_ld (str, optional): Latent-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
-            mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 4.
+            mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 1.
             lam_imit (float, optional): Weight of imitation loss term. Defaults to 0.
             ref_model (Callable, optional): Reference function to imitate if imitation loss is used. Callable that encodes an input tensor of data. Defaults to None.
             verbose (bool, optional): Whether to print training progress info. Defaults to True.
@@ -199,25 +209,36 @@ class ViVAE:
         if lam_geom>0. and lam_recon==0.:
             raise ValueError('Decoder geometric loss can only be used if reconstruction loss is used')
 
-        g = torch.Generator()
-
         if self.random_state is not None:
             np.random.seed(self.random_state)
             torch.manual_seed(self.random_state)
             random.seed(self.random_state)
-            g.manual_seed(self.random_state)
         
-        self.data_loader = DataLoader(
-            TensorDataset(torch.Tensor(X)),
-            batch_size=batch_size,
-            shuffle=True,
-            generator=g
-        )
+        if DEVICE_NAME=='mps':
+            self.data_loader = MPSDataLoader(
+                dataset=X,
+                batch_size=batch_size,
+                shuffle=True,
+                random_state=self.random_state
+            )
+        else:
+            g = torch.Generator(device=DEVICE)
+            if self.random_state is not None:
+                g.manual_seed(self.random_state)
+            self.data_loader = DataLoader(
+                TensorDataset(torch.tensor(X, device=DEVICE)),
+                batch_size=batch_size,
+                shuffle=True,
+                generator=g
+            )
+
         self.optimizer = torch.optim.Adam(
             self.net.parameters(),
             lr=learning_rate,
             weight_decay=weight_decay
         )
+        self.net.train()
+
         for epoch in range(1, n_epochs+1):
             losses = self.train_epoch(
                 lam_recon=lam_recon, lam_kldiv=lam_kldiv, lam_geom=lam_geom,
@@ -235,13 +256,13 @@ class ViVAE:
     def transform(
         self,
         X: np.ndarray,
-        batch_size: int = 256
+        batch_size: Optional[int] = None
     ) -> np.ndarray:
         """Generate embedding
 
         Args:
             X (np.ndarray): Input data coordinates.
-            batch_size (int, optional): Number of points in each transform mini-batch. Defaults to 256.
+            batch_size (int, optional): Number of points in each transform mini-batch. Defaults to None (all at once).
 
         Returns:
             np.ndarray: Latent representation of `X`.
@@ -262,7 +283,7 @@ class ViVAE:
         lam_mds: float = 100.,
         mds_distf_hd: str = 'euclidean',
         mds_distf_ld: str = 'euclidean',
-        mds_nsamp: int = 4,
+        mds_nsamp: int = 1,
         lam_imit: float = 0.,
         ref_model: Optional[Callable] = None,
         verbose: bool = True
@@ -282,7 +303,7 @@ class ViVAE:
             lam_mds (float, optional): Weight of MDS loss term. (We recommend 100 for scRNA-seq data and 10 for cytometry data.) Defaults to 100.
             mds_distf_hd (str, optional): Input-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_distf_ld (str, optional): Latent-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
-            mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 4.
+            mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 1.
             lam_imit (float, optional): Weight of imitation loss term. Defaults to 0.
             ref_model (Callable, optional): Reference function to imitate if imitation loss is used. Callable that encodes an input tensor of data. Defaults to None.
             verbose (bool, optional): Whether to print training progress info. Defaults to True.

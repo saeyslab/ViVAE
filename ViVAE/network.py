@@ -19,10 +19,10 @@ from typing import List, Dict, Union, Optional, Callable
 
 import numpy as np
 
-import torch
-torch.use_deterministic_algorithms(True)
 import torch.nn as nn
 from torch.utils.data import DataLoader
+
+from ViVAE import torch, DEVICE, DEVICE_NAME
 
 from .losses import KLDivLoss, MDSLoss, GeometricLoss, EncoderGeometricLoss, ImitationLoss
 
@@ -58,7 +58,8 @@ class Autoencoder(nn.Module):
         prev_dim = input_dim
         for idx, hidden_dim in enumerate(hidden_dims):
             enc_layers[f'{(idx+1):02d}EncoderPotential'] = nn.Linear(prev_dim, hidden_dim)
-            enc_layers[f'{(idx+1):02d}EncoderActivation'] = activation
+            if activation is not None:
+                enc_layers[f'{(idx+1):02d}EncoderActivation'] = activation
             prev_dim = hidden_dim
         if self.variational:
             self.mu = nn.Linear(prev_dim, latent_dim)
@@ -73,7 +74,8 @@ class Autoencoder(nn.Module):
         prev_dim = latent_dim
         for idx, hidden_dim in enumerate(reversed(hidden_dims)):
             dec_layers[f'{(idx+1):02d}DecoderPotential'] = nn.Linear(prev_dim, hidden_dim)
-            dec_layers[f'{(idx+1):02d}DecoderActivation'] = activation
+            if activation is not None:
+                dec_layers[f'{(idx+1):02d}DecoderActivation'] = activation
             prev_dim = hidden_dim
         dec_layers[f'{(idx+2):02d}DecoderPotential'] = nn.Linear(prev_dim, input_dim)
         
@@ -93,25 +95,25 @@ class Autoencoder(nn.Module):
         ## Specify imitation error computed using the L2 imitation loss
         self.imit_error = ImitationLoss()
 
-    def reparameterise(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
+    def reparameterise(self, mu: torch.tensor, logvar: torch.tensor) -> torch.tensor:
         """Reparameterisation trick
 
         Obtains an indirect sample from a VAE latent space.
         Maintains a probabilistic latent space.
 
         Args:
-            mu (torch.Tensor): Latent means.
-            logvar (torch.Tensor): Latent log-variances.
+            mu (torch.tensor): Latent means.
+            logvar (torch.tensor): Latent log-variances.
 
         Returns:
-            torch.Tensor: Latent space sample.
+            torch.tensor: Latent space sample.
         """
         std = torch.exp(0.5*logvar)
         eps = torch.randn_like(std)
         res = mu+eps*std
         return res
 
-    def encode(self, x: torch.Tensor):
+    def encode(self, x: torch.tensor, no_grad: bool = False):
         """Encode data
 
         Uses a trained encoder module to yield a latent-space embedding of data from input space.
@@ -128,31 +130,33 @@ class Autoencoder(nn.Module):
         To obtain an embedding of data for visualisation or downstream processing, use `mu`, which is non-noisy.
 
         Args:
-            x (torch.Tensor): Input.
+            x (torch.tensor): Input.
+            no_grad (bool, optional): Whether to run the forward pass in no-grad mode. Defaults to False.
 
         Returns:
-            - if `variational` is `False`: torch.Tensor object
-            - if `variational` is `True`: a list of 3 torch.Tensor objects (`mu`, `sigma`, `z`)
+            - if `variational` is `False`: torch.tensor object
+            - if `variational` is `True`: a list of 3 torch.tensor objects (`mu`, `sigma`, `z`)
         """
-        enc = self.encoder(x)
-        if not self.variational:
-            return enc
-        mu = self.mu(enc)
-        logvar = self.logvar(enc)
-        z = self.reparameterise(mu, logvar)
-        return mu, logvar, z
+        with torch.set_grad_enabled(not no_grad):
+            enc = self.encoder(x)
+            if not self.variational:
+                return enc
+            mu = self.mu(enc)
+            logvar = self.logvar(enc)
+            z = self.reparameterise(mu, logvar)
+            return mu, logvar, z
     
-    def submersion(self, x: torch.Tensor) -> torch.Tensor:
+    def submersion(self, x: torch.tensor) -> torch.tensor:
         """Submersion function
 
         Smooth mapping between manifolds (higher-dimensional to lower-dimensional) with surjective derivative.
         This is the encoder in its functional form.
 
         Args:
-            x (torch.Tensor): Points on higher-dimensional manifold.
+            x (torch.tensor): Points on higher-dimensional manifold.
 
         Returns:
-            torch.Tensor: Projection of `x` onto lower-dimensional manifold.
+            torch.tensor: Projection of `x` onto lower-dimensional manifold.
         """
         enc = self.encoder(x)
         if not self.variational:
@@ -160,7 +164,7 @@ class Autoencoder(nn.Module):
         mu = self.mu(enc)
         return mu
 
-    def decode(self, z: torch.Tensor) -> torch.Tensor:
+    def decode(self, z: torch.tensor, no_grad: bool = False) -> torch.tensor:
         """Decode latent representation
 
         Uses a trained decoder module to yield a reconstruction of points from latent space in the original input space.
@@ -168,31 +172,33 @@ class Autoencoder(nn.Module):
         If the model is a VAE, the latent space is probabilistic and its behaviour outside this domain may be interesting.
 
         Args:
-            z (torch.Tensor): Latent representation (embedding).
+            z (torch.tensor): Latent representation (embedding).
+            no_grad (bool, optional): Whether to run the forward pass in no-grad mode. Defaults to False.
 
         Returns:
-            torch.Tensor: Reconstruction of original data.
+            torch.tensor: Reconstruction of original data.
         """
-        z = self.decoder(z)
-        return z
+        with torch.set_grad_enabled(not no_grad):
+            z = self.decoder(z)
+            return z
     
-    def immersion(self, z: torch.Tensor) -> torch.Tensor:
+    def immersion(self, z: torch.tensor) -> torch.tensor:
         """Immersion function
 
         Smooth mapping between manifolds (lower-dimensional to higher-dimensional) with injective derivative.
         This is the decoder in its functional form.
 
         Args:
-            z (torch.Tensor): Points on lower-dimensional manifold.
+            z (torch.tensor): Points on lower-dimensional manifold.
 
         Returns:
-            torch.Tensor: Projection of `z` onto higher-dimensional manifold.
+            torch.tensor: Projection of `z` onto higher-dimensional manifold.
         """
         return self.decoder(z)
 
     def forward(
             self,
-            x: torch.Tensor,
+            x: torch.tensor,
             lam_recon: float = 1.,
             lam_kldiv: float = 1.,
             lam_geom: float = 0.,
@@ -200,7 +206,7 @@ class Autoencoder(nn.Module):
             lam_mds: float = 0.,
             mds_distf_hd: str = 'euclidean',
             mds_distf_ld: str = 'euclidean',
-            mds_nsamp: int = 4,
+            mds_nsamp: int = 1,
             lam_imit: float = 0.,
             ref_model: Optional[Callable] = None
         ) -> Dict:
@@ -217,7 +223,7 @@ class Autoencoder(nn.Module):
         The weight for divergence from latent prior (`lam_kldiv`) is ignored if the autoencoder is not variational.
 
         Args:
-            x (torch.Tensor): Input.
+            x (torch.tensor): Input.
             lam_recon (float, optional): Weight of reconstruction loss term. Defaults to 1.
             lam_kldiv (float, optional): Weight of KL divergence from latent prior. Defaults to 1.
             lam_geom (float, optional): Weight of geometric loss term. Defaults to 0.
@@ -225,7 +231,7 @@ class Autoencoder(nn.Module):
             lam_mds (float, optional): Weight of MDS loss term. Defaults to 0.
             mds_distf_hd (str, optional): Input-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             mds_distf_ld (str, optional): Latent-space distance function to be used by MDS loss. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
-            mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 4.
+            mds_nsamp (int, optional): Repeat-sampling count for computation of MDS loss. Defaults to 1.
             lam_imit (float, optional): Weight of imitation loss term. Defaults to 0.
             ref_model (Callable, optional): Reference function to imitate if imitation loss is used. Callable that encodes an input tensor of data. Defaults to None.
         Returns:
@@ -261,37 +267,39 @@ class Autoencoder(nn.Module):
             l_imit = lam_imit*self.imit_error(x, z, ref_model)
         return {'recon': l_recon, 'kldiv': l_kldiv, 'geom': l_geom, 'egeom': l_egeom, 'mds': l_mds, 'imit': l_imit}
     
-    def embed(self, x: Union[np.ndarray, torch.Tensor], batch_size: Optional[int] = 256) -> np.ndarray:
+    def embed(self, x: Union[np.ndarray, torch.tensor], batch_size: Optional[int] = None) -> np.ndarray:
         """Generate an embedding of data
 
         Uses trained encoder to creates an embedding of input data in the model latent space.
         The input data should come from the same domain as the data on which the model was trained.
 
         The data can be passed through the encoder in batches or all at once.
+        Run in no-grad mode.
 
         Args:
-            x (Union[np.ndarray, torch.Tensor]): Input data.
-            batch_size (Optional[int]): Optional batch size (or None to transform all at once). Defaults to 256.
+            x (Union[np.ndarray, torch.tensor]): Input data.
+            batch_size (Optional[int]): Optional batch size (or None to transform all at once). Defaults to None.
 
         Returns:
             np.ndarray: Embedding in latent space.
         """
         if isinstance(x, np.ndarray):
-            x = torch.Tensor(x)
+            x = torch.tensor(x, device=DEVICE)
 
-        if batch_size is not None:
-            enc = None
-            loader = DataLoader(x, batch_size=batch_size, shuffle=False)
-            for x in loader:
-                if self.variational:
-                    batch_enc, _, _ = self.encode(x)
-                else:
-                    batch_enc = self.encode(x)
-                enc = batch_enc if enc is None else torch.vstack((enc, batch_enc))
-        else:
-            if self.variational:
-                enc,_,_ = self.encode(x)
+        with torch.no_grad():
+            if batch_size is not None:
+                enc = None
+                loader = DataLoader(x, batch_size=batch_size, shuffle=False)
+                for x in loader:
+                    if self.variational:
+                        batch_enc, _, _ = self.encode(x)
+                    else:
+                        batch_enc = self.encode(x)
+                    enc = batch_enc if enc is None else torch.vstack((enc, batch_enc))
             else:
-                enc = self.encode(x)
-        enc = enc.detach().numpy()
-        return enc
+                if self.variational:
+                    enc,_,_ = self.encode(x)
+                else:
+                    enc = self.encode(x)
+            enc = enc.detach().cpu().numpy()
+            return enc

@@ -18,10 +18,9 @@ Check out the associated [paper](https://www.biorxiv.org/content/10.1101/2023.11
 
 ## Setting up
 
-For most datasets, ViVAE can be run on a consumer laptop.
-Availability of a GPU is a significant boost.
+With most datasets, ViVAE can be run on a consumer laptop with or without GPU acceleration.
 
-To try out ViVAE without installing it locally, follow the tutorial in `tutorials/example_scrnaseq.ipynb` to use ViVAE in [Google Colab](https://colab.research.google.com).
+To try out ViVAE without installing, check out the tutorial in `tutorials/example_scrnaseq.ipynb` with directions for use in [Google Colab](https://colab.research.google.com).
 
 <details>
 <summary><b>Python installation</b></summary>
@@ -41,20 +40,22 @@ pip install git+https://github.com/saeyslab/FlowSOM_Python.git@80529c6b7a1747e8e
 pip install --upgrade git+https://github.com/saeyslab/ViVAE.git
 ```
 
-GPU acceleration is recommended if available.
+GPU acceleration is possible via the CUDA or MPS backend.
 To verify whether PyTorch can use CUDA, activate your ViVAE environment and type:
 
 ```bash
 python -c "import torch; print(torch.cuda.is_available())"
 ```
 
-Alternatively, to verify whether PyTorch can use Metal (on AMD/Apple Silicon Macs):
+Alternatively, to verify whether PyTorch can use MPS (on AMD/Apple Silicon Macs):
 
 ```bash
 python -c "import torch; print(torch.backends.mps.is_available())"
 ```
 
 This will print either `True` or `False`.
+
+**Note:** MPS acceleration is disabled in favour of CPU by default; this can be changed in `ViVAE/__init__.py` (set `TRY_MPS` to `True`).
 
 <hr>
 </details>

@@ -45,20 +45,22 @@ import copy
 from .geometry import EncoderIndicatome, DecoderIndicatome
 
 palette = [
-            '#000000', '#1CE6FF', '#FF34FF', '#FF4A46', '#008941', '#006FA6', '#A30059',
-            '#7A4900', '#0000A6', '#63FFAC', '#B79762', '#004D43', '#8FB0FF', '#997D87',
-            '#5A0007', '#809693', '#1B4400', '#4FC601', '#3B5DFF', '#4A3B53', '#FF2F80',
-            '#61615A', '#BA0900', '#6B7900', '#00C2A0', '#FFAA92', '#FF90C9', '#B903AA', '#D16100',
-            '#DDEFFF', '#000035', '#7B4F4B', '#A1C299', '#300018', '#0AA6D8', '#013349', '#00846F',
-            '#372101', '#FFB500', '#C2FFED', '#A079BF', '#CC0744', '#C0B9B2', '#C2FF99', '#001E09',
-            '#00489C', '#6F0062', '#0CBD66', '#EEC3FF', '#456D75', '#B77B68', '#7A87A1', '#788D66',
-            '#885578', '#FAD09F', '#FF8A9A', '#D157A0', '#BEC459', '#456648', '#0086ED', '#886F4C',
-            '#34362D', '#B4A8BD', '#00A6AA', '#452C2C', '#636375', '#A3C8C9', '#FF913F', '#938A81',
-            '#575329', '#00FECF', '#B05B6F', '#8CD0FF', '#3B9700', '#04F757', '#C8A1A1', '#1E6E00',
-            '#7900D7', '#A77500', '#6367A9', '#A05837', '#6B002C', '#772600', '#D790FF', '#9B9700',
-            '#549E79', '#FFF69F', '#201625', '#72418F', '#BC23FF', '#99ADC0', '#3A2465', '#922329',
-            '#5B4534', '#FDE8DC', '#404E55', '#0089A3', '#CB7E98', '#A4E804', '#324E72', '#6A3A4C'
-        ]
+    '#000000', '#1CE6FF', '#FF34FF', '#FF4A46', '#008941', '#006FA6', '#A30059',
+    '#7A4900', '#0000A6', '#63FFAC', '#B79762', '#004D43', '#8FB0FF', '#997D87',
+    '#5A0007', '#809693', '#1B4400', '#4FC601', '#3B5DFF', '#4A3B53', '#FF2F80',
+    '#61615A', '#BA0900', '#6B7900', '#00C2A0', '#FFAA92', '#FF90C9', '#B903AA',
+    '#D16100', '#DDEFFF', '#000035', '#7B4F4B', '#A1C299', '#300018', '#0AA6D8',
+    '#013349', '#00846F', '#372101', '#FFB500', '#C2FFED', '#A079BF', '#CC0744',
+    '#C0B9B2', '#C2FF99', '#001E09', '#00489C', '#6F0062', '#0CBD66', '#EEC3FF',
+    '#456D75', '#B77B68', '#7A87A1', '#788D66', '#885578', '#FAD09F', '#FF8A9A',
+    '#D157A0', '#BEC459', '#456648', '#0086ED', '#886F4C', '#34362D', '#B4A8BD',
+    '#00A6AA', '#452C2C', '#636375', '#A3C8C9', '#FF913F', '#938A81', '#575329',
+    '#00FECF', '#B05B6F', '#8CD0FF', '#3B9700', '#04F757', '#C8A1A1', '#1E6E00',
+    '#7900D7', '#A77500', '#6367A9', '#A05837', '#6B002C', '#772600', '#D790FF',
+    '#9B9700', '#549E79', '#FFF69F', '#201625', '#72418F', '#BC23FF', '#99ADC0',
+    '#3A2465', '#922329', '#5B4534', '#FDE8DC', '#404E55', '#0089A3', '#CB7E98',
+    '#A4E804', '#324E72', '#6A3A4C'
+]
 
 def plot_embedding(
     embedding: np.ndarray,
@@ -210,10 +212,7 @@ def plot_embedding(
         # Add FlowSOM tree edges
         edge_list = fsom.get_cluster_data().uns['graph'].get_edgelist()
         segment_plot = [
-            (layout[nodeID[0], 0],
-             layout[nodeID[0], 1],
-             layout[nodeID[1], 0],
-             layout[nodeID[1], 1])
+            (layout[nodeID[0], 0], layout[nodeID[0], 1], layout[nodeID[1], 0], layout[nodeID[1], 1])
              for nodeID in edge_list
         ]
         edges = np.asarray(segment_plot, dtype=np.float32)
@@ -358,7 +357,6 @@ def plot_embedding(
 def plot_indicatrices(
         indicatrices: Union[EncoderIndicatome,DecoderIndicatome],
         scale_factor: Optional[float] = None,
-        log10: bool = False,
         s: float = 0.05,
         figsize: Tuple[int, int] = (5,5),
         show: bool = True,
@@ -371,7 +369,6 @@ def plot_indicatrices(
     Args:
         indicatrices (Union[EncoderIndicatome,DecoderIndicatome]): Set of indicatrices.
         scale_factor (float, optional): Scaling factor for the polygons. Defaults to 1e-2 for decoder and radius^(-1) for encoder.
-        log10 (bool, optional): Whether to use log10-scaling relative to indicatrix size. Defaults to False.
         s (float, optional): Point size. Defaults to 0.05.
         figsize (Tuple[int, int], optional): Figure size. Defaults to (5,5).
         show (bool, optional): Whether to show the plot, in addition to returning the fig, ax objects. Defaults to True.
@@ -386,7 +383,7 @@ def plot_indicatrices(
         elif isinstance(indicatrices, DecoderIndicatome):
             scale_factor = 1e-2
 
-    emb = indicatrices.get_embedding()
+    emb = indicatrices.get_embedding().detach().cpu().numpy()
     pol = indicatrices.get_polygons(scale_factor=scale_factor)
 
     fig, ax = plt.subplots(figsize=figsize)

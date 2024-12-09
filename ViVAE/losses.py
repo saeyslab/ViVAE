@@ -51,14 +51,11 @@ limitations under the License.
 
 from .geometry import jacobian, metric_tensor
 
+from ViVAE import torch, DEVICE, DEVICE_NAME
+
 from typing import Callable, List, Union, Optional
 
 import numpy as np
-import torch
-
-## We use deterministic variants of PyTorch algorithms where applicable.
-## This may be slower, but helps with reproducibility.
-torch.use_deterministic_algorithms(True)
 
 class ImitationLoss():
     """Imitation loss
@@ -68,20 +65,20 @@ class ImitationLoss():
     """
     def __init__(self):
         pass
-    def __call__(self, x: torch.Tensor, z: torch.Tensor, ref_model: Callable):
+    def __call__(self, x: torch.tensor, z: torch.tensor, ref_model: Callable):
         """Compute imitation loss
 
         Args:
-            x (torch.Tensor): Input points.
-            z (torch.Tensor): Embedding of input points.
+            x (torch.tensor): Input points.
+            z (torch.tensor): Embedding of input points.
             ref_model (Callable): Reference model that transforms `x`.
         
         Returns:
-            torch.Tensor: Loss value averaged across batch.
+            torch.tensor: Loss value averaged across batch.
         """
 
         z_ref = ref_model(x)
-        l2 = torch.sqrt(torch.maximum(torch.sum(torch.square(z-z_ref), dim=1, keepdim=False), torch.Tensor([1e-9])))
+        l2 = torch.sqrt(torch.maximum(torch.sum(torch.square(z-z_ref), dim=1, keepdim=False), torch.tensor(1e-9, device=DEVICE)))
         res = torch.mean(l2)
         return res
 
@@ -103,21 +100,21 @@ class KLDivLoss():
     KL divergence from latent prior distribution (isotropic Gaussian) in a VAE.
     """
     def __init__(self):
-        self.eps_std = torch.Tensor([1e-2])
+        self.eps_std = torch.tensor([1e-2], device=DEVICE)
         self.eps_sq = self.eps_std ** 2
 
-    def __call__(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
+    def __call__(self, mu: torch.tensor, logvar: torch.tensor) -> torch.tensor:
         """Kullback-Leiber divergence loss
 
         Computes Kullback-Leibler divergence from latent prior.
         Uses mean (not sum) across batch size.
 
         Args:
-            mu (torch.Tensor): Latent means.
-            logvar (torch.Tensor): Latent log-variances.
+            mu (torch.tensor): Latent means.
+            logvar (torch.tensor): Latent log-variances.
 
         Returns:
-            torch.Tensor: KL divergence.
+            torch.tensor: KL divergence.
         """
         res = -0.5*torch.mean(logvar+torch.log(self.eps_sq)-torch.square(mu)-self.eps_sq*logvar.exp())
         res /= mu.shape[0]
@@ -130,39 +127,40 @@ class MDSLoss():
     Stochastic multi-dimensional scaling (MDS) loss for multi-scale structure preservation in any differentiable encoder or autoencoder model.
     """
     @staticmethod
-    def euclidean_distance(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def euclidean_distance(x: torch.tensor, y: torch.tensor) -> torch.tensor:
         """L2 (Euclidean) distance
 
         Scales to multiple pairs of points (row-wise).
 
         Args:
-            x (torch.Tensor): Row-wise coordinates (batch).
-            y (torch.Tensor): Row-wise coordinates (batch).
+            x (torch.tensor): Row-wise coordinates (batch).
+            y (torch.tensor): Row-wise coordinates (batch).
 
         Returns:
-            torch.Tensor: Distances.
+            torch.tensor: Distances.
         """
-        res = torch.sqrt(torch.maximum(torch.sum(torch.square(x-y), dim=1, keepdim=False), torch.Tensor([1e-9])))
+
+        res = torch.sqrt(torch.maximum(torch.sum(torch.square(x-y), dim=1, keepdim=False), torch.tensor(1e-9, device=DEVICE)))
         return res
 
     @staticmethod
-    def cosine_distance(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def cosine_distance(x: torch.tensor, y: torch.tensor) -> torch.tensor:
         """Cosine distance
 
         Scales to multiple pairs of points (row-wise).
 
         Args:
-            x (torch.Tensor): Row-wise coordinates (batch).
-            y (torch.Tensor): Row-wise coordinates (batch).
+            x (torch.tensor): Row-wise coordinates (batch).
+            y (torch.tensor): Row-wise coordinates (batch).
 
         Returns:
-            torch.Tensor: Distances.
+            torch.tensor: Distances.
         """
         res = 1.-torch.nn.functional.cosine_similarity(x, y, dim=1)
         return res
 
     @staticmethod
-    def quartet_dissimilarity(x: List[torch.Tensor], z: List[torch.Tensor], i: int, j: int, xd: torch.Tensor, zd: torch.Tensor, distf_hd, distf_ld) -> torch.Tensor:
+    def quartet_dissimilarity(x: List[torch.tensor], z: List[torch.tensor], i: int, j: int, xd: torch.tensor, zd: torch.tensor, distf_hd, distf_ld) -> torch.tensor:
         """Quartet-normalised dissimilarity
 
         Computes a differentiable dissimilarity value for a pair of points in input and embedding space.
@@ -171,25 +169,25 @@ class MDSLoss():
         Scales to multiple quartets (i.e., multiple pairs of points with the same intra-quartet indices but coming from different quartets).
 
         Args:
-            x (List[torch.Tensor]): Input points of indices 1 to 4 in their respective quartets.
-            z (List[torch.Tensor]): Embeddings of `x`.
+            x (List[torch.tensor]): Input points of indices 1 to 4 in their respective quartets.
+            z (List[torch.tensor]): Embeddings of `x`.
             i (int): First point index across quartets.
             j (int): Second point index across quartets.
-            xd (torch.Tensor): Denominator (normaliser) for `x`.
-            zd (torch.Tensor): Denominator (normaliser) for `z`.
+            xd (torch.tensor): Denominator (normaliser) for `x`.
+            zd (torch.tensor): Denominator (normaliser) for `z`.
             distf_hd: Distance function to use in input space (static method of `MDSLoss`).
             distf_ld: Distance function to use in embedding space (static method of `MDSLoss`).
 
         Returns:
-            torch.Tensor: Dissimilarities.
+            torch.tensor: Dissimilarities.
         """
         dx = distf_hd(x[i], x[j]) / xd
         dz = distf_ld(z[i], z[j]) / zd
-        D = torch.pow(dx-dz, 2.)
+        D = torch.pow(dx-dz, torch.tensor(2., device=DEVICE))
         return D
     
     @staticmethod
-    def quartet_norm_factor(x: List[torch.Tensor], distf):
+    def quartet_norm_factor(x: List[torch.tensor], distf):
         """Quartet-normalisation factor
 
         Computes a normalisation value for pairwise point distances w.r.t. their quartets.
@@ -198,18 +196,18 @@ class MDSLoss():
         Scales to multiple quartets.
 
         Args:
-            x (List[torch.Tensor]): Points of indices 1-4 in their respective quartets.
+            x (List[torch.tensor]): Points of indices 1-4 in their respective quartets.
             distf: Distance function (static method of `MDSLoss`).
 
         Returns:
-            torch.Tensor: Normalisation values.
+            torch.tensor: Normalisation values.
         """
         f = distf
         res = f(x[0],x[1])+f(x[1],x[2])+f(x[2],x[3])+f(x[0],x[2])+f(x[0],x[3])+f(x[1],x[3])
         return res
 
     @staticmethod
-    def quartet_cost(xq: List[torch.Tensor], zq: List[torch.Tensor], distf_hd, distf_ld) -> torch.Tensor:
+    def quartet_cost(xq: List[torch.tensor], zq: List[torch.tensor], distf_hd, distf_ld) -> torch.tensor:
         """Quartet cost
 
         Computes a quartet cost value as the average quartet dissimilarity for all 6 pairwise distances within it.
@@ -217,13 +215,13 @@ class MDSLoss():
         Scales to multiple quartets.
 
         Args:
-            xq (List[torch.Tensor]): Input points of indices 1-4 in their respective quartets.
-            zq (List[torch.Tensor]): Embeddings of `x`.
+            xq (List[torch.tensor]): Input points of indices 1-4 in their respective quartets.
+            zq (List[torch.tensor]): Embeddings of `x`.
             distf_hd: Distance function to use in input space (static method of `MDSLoss`).
             distf_ld: Distance function to use in embedding space (static method of `MDSLoss`).
 
         Returns:
-            torch.Tensor: Cost.
+            torch.tensor: Cost.
         """
         xd = MDSLoss.quartet_norm_factor(x=xq, distf=distf_hd)
         zd = MDSLoss.quartet_norm_factor(x=zq, distf=distf_ld)
@@ -232,7 +230,7 @@ class MDSLoss():
         res = torch.mean(d(0,1)+d(1,2)+d(2,3)+d(0,2)+d(0,3)+d(1,3))
         return res
 
-    def __call__(self, x: torch.Tensor, z: torch.Tensor, distf_hd: str = 'euclidean', distf_ld: str = 'euclidean', n_sampling: int = 1) -> torch.Tensor:
+    def __call__(self, x: torch.tensor, z: torch.tensor, distf_hd: str = 'euclidean', distf_ld: str = 'euclidean', n_sampling: int = 1) -> torch.tensor:
         """Stochastic-MDS loss
 
         Penalises change in relative positions of points within randomly sampled quartets (groups of 4).
@@ -251,19 +249,19 @@ class MDSLoss():
         - group size (which is hard-coded to 4 in this quartet implementation).
 
         Args:
-            x (torch.Tensor): Input.
-            z (torch.Tensor): Encoding.
+            x (torch.tensor): Input.
+            z (torch.tensor): Encoding.
             distf_hd (str, optional): Distance function to be used by MDS loss for input space. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             distf_ld (str, optional): Distance function to be used by MDS loss for embedding space. Either 'euclidean' or 'cosine'. Defaults to 'euclidean'.
             n_sampling (int, optional): How many times groups are (re-)sampled. Defaults to 1.
         Returns:
-            torch.Tensor: Loss.
+            torch.tensor: Loss.
         """
         
         ## Determine batch size and quartet count
         n = x.shape[0]
         nq = n//4
-        
+
         ## Resolve distance functions
         if distf_hd=='euclidean':
             distf_hd = MDSLoss.euclidean_distance
@@ -279,19 +277,27 @@ class MDSLoss():
             raise ValueError('Invalid distance function specification for MDS loss')
 
         ## Initialise loss
-        loss = torch.FloatTensor([0.])
+        loss = torch.tensor([0.], device=DEVICE)
 
         ## Iterate over sampling repeats
-        for _ in range(n_sampling):
+        for i in range(n_sampling):
         
             ## Divide data into quartets
             idcs = [0, nq, nq*2, nq*3]
-            xq = [x[np.arange(idx, idx+nq)] for idx in idcs] # input space
-            zq = [z[np.arange(idx, idx+nq)] for idx in idcs] # embedding space
+
+            if i>0:
+                perm = torch.randperm(n)
+            else:
+                perm = torch.arange(n)
+            xq = [x[perm][torch.arange(idx, idx+nq)] for idx in idcs] # input space
+            zq = [z[perm][torch.arange(idx, idx+nq)] for idx in idcs] # embedding space
+
+            xq = [x[perm][torch.arange(idx, idx+nq)] for idx in idcs] # input space
+            zq = [z[perm][torch.arange(idx, idx+nq)] for idx in idcs] # embedding space
 
             ## Account for variable batch size
-            res = torch.multiply(MDSLoss.quartet_cost(xq=xq, zq=zq, distf_hd=distf_hd, distf_ld=distf_ld), n)
-            res = torch.divide(res, nq)
+            res = torch.multiply(MDSLoss.quartet_cost(xq=xq, zq=zq, distf_hd=distf_hd, distf_ld=distf_ld), torch.tensor(n, device=DEVICE))
+            res = torch.divide(res, torch.tensor(nq, device=DEVICE))
 
             loss += res
         
@@ -304,15 +310,15 @@ class GeometricLoss():
 
     Penalises local stretching of latent space, quantified via Jacobian of the immersion function defined by decoder.
     """
-    def __call__(self, immersion: Callable, z: torch.Tensor) -> torch.Tensor:
+    def __call__(self, immersion: Callable, z: torch.tensor) -> torch.tensor:
         """Geometric loss for decoder
 
         Args:
             f (Callable): Immersion function (decoder).
-            z (torch.Tensor): Latent representation of input to model.
+            z (torch.tensor): Latent representation of input to model.
 
         Returns:
-            torch.Tensor: loss
+            torch.tensor: loss
         """
 
         ## Compute Jacobian matrix
@@ -335,15 +341,15 @@ class EncoderGeometricLoss():
 
     Penalises local stretching of latent space, quantified via Jacobian of the encoder.
     """
-    def __call__(self, submersion: Callable, x: torch.Tensor) -> torch.Tensor:
+    def __call__(self, submersion: Callable, x: torch.tensor) -> torch.tensor:
         """Geometric loss for encoder
 
         Args:
             f (Callable): Submersion function (encoder).
-            z (torch.Tensor): Input to model.
+            z (torch.tensor): Input to model.
 
         Returns:
-            torch.Tensor: loss
+            torch.tensor: loss
         """
 
         ## Compute Jacobian matrix

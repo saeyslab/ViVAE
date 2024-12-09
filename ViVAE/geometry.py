@@ -33,23 +33,23 @@ import numpy as np
 
 from scipy.spatial import Delaunay
 
-import torch
-torch.use_deterministic_algorithms(True)
 import torch.func
 from torch.utils.data import DataLoader
+
+from ViVAE import torch, DEVICE, DEVICE_NAME
 
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Polygon
 
-def jacobian(f: Callable, x: torch.Tensor) -> torch.Tensor:
+def jacobian(f: Callable, x: torch.tensor) -> torch.tensor:
     """Compute Jacobian matrices
 
     Args:
         f (Callable): Immersion/submersion function.
-        x (torch.Tensor): Input to `f`.
+        x (torch.tensor): Input to `f`.
 
     Returns:
-        torch.Tensor: Jacobian matrices.
+        torch.tensor: Jacobian matrices.
     """
     try:
         jac = torch.func.vmap(torch.func.jacfwd(f), in_dims=(0,))(x)
@@ -57,15 +57,15 @@ def jacobian(f: Callable, x: torch.Tensor) -> torch.Tensor:
         jac = torch.func.vmap(torch.func.jacrev(f), in_dims=(0,))(x)
     return jac
 
-def metric_tensor(jac: torch.Tensor, rev: bool = False) -> torch.Tensor:
+def metric_tensor(jac: torch.tensor, rev: bool = False) -> torch.tensor:
     """Compute metric tensor from Jacobian
 
     Args:
-        jac (torch.Tensor): Jacobian matrix.
+        jac (torch.tensor): Jacobian matrix.
         rev (bool, optional): Swap terms of the equation to work with the encoder (submersion) case.
 
     Returns:
-        torch.Tensor: metric
+        torch.tensor: metric
     """
     if not rev:
         res = torch.matmul(torch.transpose(jac, 1, 2), jac)
@@ -76,16 +76,16 @@ def metric_tensor(jac: torch.Tensor, rev: bool = False) -> torch.Tensor:
 class EncoderIndicatome():
     """Set of encoder indicatrices"""
 
-    def __init__(self, model, x: Union[np.ndarray, torch.Tensor]):
+    def __init__(self, model, x: Union[np.ndarray, torch.tensor]):
         """Initialise encoder indicatome
 
         Args:
             model (Autoencoder): Trained Autoencoder object.
-            x (Union[np.ndarray, torch.Tensor]): Input data to `model`.
+            x (Union[np.ndarray, torch.tensor]): Input data to `model`.
         """
         self.model = model
         if isinstance(x, np.ndarray):
-            x = torch.FloatTensor(x)
+            x = torch.tensor(x)
         self.x = x
         self.act = None
         self.stepsize = None
@@ -94,16 +94,16 @@ class EncoderIndicatome():
         self.r = None
 
     @staticmethod
-    def gridpoint_idcs(ref: torch.Tensor, xgrid: torch.Tensor, ygrid: torch.Tensor, padding: float = 0.1, minpts: Optional[int] = None) -> np.ndarray:
+    def gridpoint_idcs(ref: torch.tensor, xgrid: torch.tensor, ygrid: torch.tensor, padding: float = 0.1, minpts: Optional[int] = None) -> torch.tensor:
         """Find points on 2-d grid
 
         Finds points in reference 2-d data closest to each point on a grid over the data.
         Some points on the grid may remain unmatched.
 
         Args:
-            ref (torch.Tensor): Reference dataset coordinates.
-            xgrid (torch.Tensor): Grid x-coordinates.
-            ygrid (torch.Tensor): Grid y-coordinates.
+            ref (torch.tensor): Reference dataset coordinates.
+            xgrid (torch.tensor): Grid x-coordinates.
+            ygrid (torch.tensor): Grid y-coordinates.
             padding (float, optional): Part grid tile around point that gets excluded from search. Deaults to 0.1.
             minpts (int, optional): Minimum number of points per tile for the tile not to be excluded. Defaults to None.
 
@@ -120,20 +120,20 @@ class EncoderIndicatome():
                 
                 xpool = torch.bitwise_and(ref[:,0]>xlim[0], ref[:,0]<=xlim[1])
                 ypool = torch.bitwise_and(ref[:,1]>ylim[0], ref[:,1]<=ylim[1])
-                pool = torch.where(np.bitwise_and(xpool, ypool))[0]
+                pool = torch.where(torch.bitwise_and(xpool, ypool))[0]
 
                 if pool.shape[0]>0:
                     if minpts is not None and pool.shape[0]<minpts:
                         idx = None
                     else:
-                        center = torch.Tensor([(xlim[0]+xlim[1])/2, (ylim[0]+ylim[1])/2])
+                        center = torch.tensor([(xlim[0]+xlim[1])/2, (ylim[0]+ylim[1])/2])
                         idx = torch.argmin(torch.sum((center-ref[pool])**2, axis=1)) # nearest                    
                         idcs.append(pool[idx])
                     
-        return np.array(idcs)
+        return torch.stack(idcs)
 
     @staticmethod
-    def circle_on_2manifold(origin: torch.Tensor, t1: torch.Tensor = torch.Tensor([1., 0.]), t2: torch.Tensor = torch.Tensor([0., 1.]), r: float = 0.1, n: int = 50) -> torch.Tensor:
+    def circle_on_2manifold(origin: torch.tensor, t1: torch.tensor = torch.tensor([1., 0.]), t2: torch.tensor = torch.tensor([0., 1.]), r: float = 0.1, n: int = 50) -> torch.tensor:
         """Circle on 2-manifold
 
         Constructs a circle of radius `r` on 2-manifold embedded in (possibly higher-dimensional) ambient space.
@@ -142,14 +142,14 @@ class EncoderIndicatome():
         Tangent vectors `t1` and `t2` define the 2-manifold.
 
         Args:
-            origin (torch.Tensor): Center of circle.
-            t1 (torch.Tensor, optional): First tangent vector. Defaults to (1,0).
-            t2 (torch.Tensor, optional): Second tangent vector. Defaults to (0,1).
+            origin (torch.tensor): Center of circle.
+            t1 (torch.tensor, optional): First tangent vector. Defaults to (1,0).
+            t2 (torch.tensor, optional): Second tangent vector. Defaults to (0,1).
             r (float, optional): Radius. Defaults to 1e-15.
             n (int, optional): Number of sampled points on circumference of circle. Defaults to 50.
 
         Returns:
-            torch.Tensor: `n` points from the circumference of the circle.
+            torch.tensor: `n` points from the circumference of the circle.
         """
 
         t1_norm = t1/torch.linalg.norm(t1)
@@ -158,21 +158,21 @@ class EncoderIndicatome():
             raise ValueError('Vectors `t1` and `t2` must be orthogonal.')
         angles = torch.arange(0, 1, step=1/n)*2*torch.pi
         a = np.newaxis
-        points = origin+r*np.cos(angles[:,a])*t1_norm[a,:]+r*np.sin(angles[:,a])*t2_norm[a,:]
+        points = origin+r*torch.cos(angles[:,a])*t1_norm[a,:]+r*torch.sin(angles[:,a])*t2_norm[a,:]
         return points
 
     @staticmethod
-    def scale_ellipse(circum: torch.Tensor, origin: torch.Tensor, factor: float = 10., log: bool = False) -> torch.Tensor:
+    def scale_ellipse(circum: torch.tensor, origin: torch.tensor, factor: float = 10., log: bool = False) -> torch.tensor:
         """Scale a 2-d ellipse
 
         Args:
-            circum (torch.Tensor): Points from circumference of ellipse.
-            origin (torch.Tensor): Origin (center) of ellipse.
+            circum (torch.tensor): Points from circumference of ellipse.
+            origin (torch.tensor): Origin (center) of ellipse.
             factor (float, optional): _description_. Factor by which to scale. Defaults to 10..
             log (bool, optional): Whether to use log10 scaling. Defaults to False.
 
         Returns:
-            torch.Tensor: Corresponding points from circumference of re-scaled ellipse.
+            torch.tensor: Corresponding points from circumference of re-scaled ellipse.
         """
         vecs = circum-origin
         if log:
@@ -207,7 +207,6 @@ class EncoderIndicatome():
             else:
                 batch_act = self.model.encode(batch)
             act = batch_act if act is None else torch.vstack((act, batch_act))
-        act = act.detach().cpu()
         self.act = act
 
         ## Extract gridpoints from embedding
@@ -279,12 +278,12 @@ class EncoderIndicatome():
 class DecoderIndicatome():
     """Set of decoder indicatrices"""
 
-    def __init__(self, model, x: Union[np.ndarray, torch.Tensor]):
+    def __init__(self, model, x: Union[np.ndarray, torch.tensor]):
         """Initialise decoder indicatome
 
         Args:
             model (Autoencoder): Trained Autoencoder object.
-            x (Union[np.ndarray, torch.Tensor]): Input data to `model`.
+            x (Union[np.ndarray, torch.tensor]): Input data to `model`.
         """
         self.model = model
         if isinstance(x, np.ndarray):
