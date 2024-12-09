@@ -33,29 +33,39 @@ On Linux or macOS, use the command line for installation.
 On Windows, use Anaconda Prompt.
 
 ```bash
-conda create --name ViVAE python=3.11.7 \
-    numpy==1.26.3 numba==0.59.0 pandas==2.2.0 matplotlib==3.8.2 scipy==1.12.0 pynndescent==0.5.11 scikit-learn==1.4.0 scanpy==1.9.8 pytorch==2.1.2
+conda create --name ViVAE python=3.11.7
 conda activate ViVAE
-pip install git+https://github.com/saeyslab/FlowSOM_Python.git@80529c6b7a1747e8e71042102ac8762c3bfbaa1b
 pip install --upgrade git+https://github.com/saeyslab/ViVAE.git
 ```
 
-GPU acceleration is possible via the CUDA or MPS backend.
-To verify whether PyTorch can use CUDA, activate your ViVAE environment and type:
+For FlowSOM integration, also run
 
 ```bash
-python -c "import torch; print(torch.cuda.is_available())"
+pip install git+https://github.com/saeyslab/FlowSOM_Python.git@80529c6b7a1747e8e71042102ac8762c3bfbaa1b
 ```
 
-Alternatively, to verify whether PyTorch can use MPS (on AMD/Apple Silicon Macs):
+While ViVAE runs well on CPU, the model can take advantage of GPU acceleration via CUDA or MPS.
+By default, ViVAE attempts to use CUDA if available, but not MPS.
+To enable or disable the CUDA or MPS backend for ViVAE, modify the environment variables `VIVAE_CUDA` and `VIVAE_MPS`, respectively, before importing ViVAE:
 
-```bash
-python -c "import torch; print(torch.backends.mps.is_available())"
+```python
+## In Python:
+import os
+os.environ['VIVAE_CUDA'] = '1' # enable
+os.environ['VIVAE_MPS'] = '0' # disable
+import ViVAE
 ```
 
-This will print either `True` or `False`.
+In the interest of reproducibility across repeated runs, ViVAE uses deterministic algorithms where applicable and supports setting a random seed (via the `random_state` argument of the `ViVAE.ViVAE` model constructor).
+Disabling determinism may increase performance.
+To do so, set the `VIVAE_DETERMINISTIC` environment variable to '0':
 
-**Note:** MPS acceleration is disabled in favour of CPU by default; this can be changed in `ViVAE/__init__.py` (set `TRY_MPS` to `True`).
+```python
+## In Python:
+import os
+os.environ['VIVAE_DETERMINISTIC'] = '0' # disable
+import ViVAE
+```
 
 <hr>
 </details>
