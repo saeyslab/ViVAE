@@ -44,25 +44,10 @@ conda_create('r-vivae', python_version = '3.11.7')
 use_condaenv(condaenv = 'r-vivae')
 
 ## Install ViVAE
-conda_install(
-  envname = 'r-vivae',
-  packages = c(
-    'numpy==1.26.3', 'numba==0.59.0', 'pandas==2.2.0', 'matplotlib==3.8.2',
-    'scipy==1.12.0', 'pynndescent==0.5.11', 'scikit-learn==1.4.0', 'pytorch==2.1.2',
-    'scanpy==1.9.8'
-))
 py_install('git+https://github.com/saeyslab/ViVAE.git', pip = TRUE)
 
 ## Install ViScore
-py_install('pyemd==1.0.0', pip = TRUE)
 py_install('git+https://github.com/saeyslab/ViScore.git', pip = TRUE)
-```
-
-If we want to use GPU acceleration (which is strongly preferred), the availability of that can be tested easily.
-To test whether PyTorch can use CUDA acceleration (with NVIDIA GPUs) or MPS (with AMD or Apple Silicon GPUs on Mac computers), we run the following.
-
-```{r test-gpu, eval=FALSE}
-py_run_string('import torch; print(f"CUDA available: {torch.cuda.is_available()}"); print(f"MPS available: {torch.backends.mps.is_available()}")')
 ```
 
 ## Creating an embedding
@@ -93,16 +78,16 @@ Note that when interfacing with Python, any numbers that are integers are clearl
 
 ```{r embedding, eval=FALSE}
 ## Import ViVAE
-vivae <- import('ViVAE')
+vv <- import('vivae')
 
 ## Compute a k-nearest-neighbour graph
-knn <- vivae$make_knn(e, fname = 'Samusik_knn.npy', k = 100L, random_state = 42L)
+knn <- vv$make_knn(e, fname = 'Samusik_knn.npy', k = 100L, random_state = 42L)
 
 ## Denoise expression matrix
-e_d <- vivae$smooth(e, knn, k = 100L, coef = 1., n_iter = 1L)
+e_d <- vv$smooth(e, knn, k = 100L, coef = 1., n_iter = 1L)
 
 ## Initialise and train a ViVAE model
-model <- vivae$ViVAE(input_dim = as.integer(ncol(e)), latent_dim = 2L, random_state = 1L)
+model <- vv$ViVAE(input_dim = as.integer(ncol(e)), latent_dim = 2L, random_state = 1L)
 model$fit(e_d, n_epochs = 50L, batch_size = 512L)
 
 ## Produce an embedding
@@ -138,10 +123,10 @@ We compute Local and Global Structure Preservation below.
 
 ```{r sp, eval=FALSE}
 ## Import ViScore
-viscore <- import('ViScore')
+vs <- import('viscore')
 
 ## Compute and report RNX-based Local and Global SP
-sp <- viscore$score(hd = e, ld = as.matrix(emb[, c(1, 2)])) # make sure we pass numeric matrices (no data frames)
+sp <- vs$score(hd = e, ld = as.matrix(emb[, c(1, 2)])) # make sure we pass numeric matrices (no data frames)
 cat('Local SP:\t', round(sp$Sl, 3), '\nGlobal SP:\t', round(sp$Sg, 3))
 ```
 

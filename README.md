@@ -18,10 +18,9 @@ Check out the associated [paper](https://www.biorxiv.org/content/10.1101/2023.11
 
 ## Setting up
 
-For most datasets, ViVAE can be run on a consumer laptop.
-Availability of a GPU is a significant boost.
+With most datasets, ViVAE can be run on a consumer laptop with or without GPU acceleration.
 
-To try out ViVAE without installing it locally, follow the tutorial in `tutorials/example_scrnaseq.ipynb` to use ViVAE in [Google Colab](https://colab.research.google.com).
+To try out ViVAE without installing, check out the tutorial in `tutorials/example_scrnaseq.ipynb` with directions for use in [Google Colab](https://colab.research.google.com).
 
 <details>
 <summary><b>Python installation</b></summary>
@@ -34,27 +33,27 @@ On Linux or macOS, use the command line for installation.
 On Windows, use Anaconda Prompt.
 
 ```bash
-conda create --name ViVAE python=3.11.7 \
-    numpy==1.26.3 numba==0.59.0 pandas==2.2.0 matplotlib==3.8.2 scipy==1.12.0 pynndescent==0.5.11 scikit-learn==1.4.0 scanpy==1.9.8 pytorch==2.1.2
+conda create --name ViVAE python=3.11.9
 conda activate ViVAE
-pip install git+https://github.com/saeyslab/FlowSOM_Python.git@80529c6b7a1747e8e71042102ac8762c3bfbaa1b
 pip install --upgrade git+https://github.com/saeyslab/ViVAE.git
 ```
 
-GPU acceleration is recommended if available.
-To verify whether PyTorch can use CUDA, activate your ViVAE environment and type:
+For FlowSOM integration, also run
 
 ```bash
-python -c "import torch; print(torch.cuda.is_available())"
+pip install git+https://github.com/saeyslab/FlowSOM_Python
 ```
 
-Alternatively, to verify whether PyTorch can use Metal (on AMD/Apple Silicon Macs):
+In the interest of reproducibility across repeated runs, ViVAE uses deterministic algorithms where applicable and supports setting a random seed (via the `random_state` argument of the `vv.ViVAE` model constructor).
+Disabling determinism may increase performance.
+To do so, set the `VIVAE_DETERMINISTIC` environment variable to '0':
 
-```bash
-python -c "import torch; print(torch.backends.mps.is_available())"
+```python
+## In Python:
+import os
+os.environ['VIVAE_DETERMINISTIC'] = '0' # disable
+import ViVAE
 ```
-
-This will print either `True` or `False`.
 
 <hr>
 </details>
@@ -65,6 +64,55 @@ This will print either `True` or `False`.
 
 We are working on an R implementation of ViVAE that is independent of PyTorch.
 In the meantime, to install and run ViVAE in R using [reticulate](https://rstudio.github.io/reticulate/), use our R vignette (`tutorials/example_r.Rmd`) (an RMarkdown file you can open in RStudio).
+
+<hr>
+</details>
+
+<details>
+<summary><b>Using GPU acceleration</b></summary>
+<br>
+
+While ViVAE runs well on CPU, the model can take advantage of GPU acceleration via CUDA or MPS.
+By default, ViVAE attempts to use CUDA if available, but not MPS.
+To enable or disable the CUDA or MPS backend for ViVAE, modify the environment variables `VIVAE_CUDA` and `VIVAE_MPS`, respectively, before importing ViVAE:
+
+```python
+## In Python:
+import os
+os.environ['VIVAE_CUDA'] = '1' # enable
+os.environ['VIVAE_MPS'] = '0' # disable
+import vivae as vv
+```
+
+Set both to `'0'` to use CPU.
+In our tests, using MPS for acceleration only seems to make sense with larger training batch sizes.
+
+<hr>
+</details>
+
+<details>
+<summary><b>Reproducibility</b></summary>
+<br>
+
+To facilitate the reproducibility of results within a fixed workflow, ViVAE enables [PyTorch determinism](https://pytorch.org/docs/stable/notes/randomness.html) by default.
+This is not a guarantee of full reproducibility across different hardware and software set-ups, but it increases the chance of getting the same result across runs.
+
+Please beware, ViVAE is likely to run slower when deterministic.
+You can enable the use of non-deterministic operations by setting the `'VIVAE_DETERMINISTIC'` environment variable to `'0'` before importing ViVAE:
+
+```python
+## In Python:
+import os
+os.environ['VIVAE_DETERMINISTIC'] = '0' # disable
+import vivae as vv
+```
+
+To maximise reproducibility of results in the tutorials and case studies provided in this repo, please use the CPU backend (see the section above) with determinism enabled.
+
+We do not attempt reproducibility between an MPS-accelerated model and a CPU-/CUDA-accelerated one.
+This is because, at least for the time being, we need to use a custom data loader class internally to make ViVAE work with MPS.
+
+See also the *Stability* section below, which speaks to the reduction of randomness the ViVAE model.
 
 </details>
 
@@ -107,19 +155,7 @@ Our R installation vignette (`tutorials/example_r.Rmd`) shows how to use ViVAE d
 <hr>
 </details>
 
-We also showcase some experimental modifications of the model that will mostly be interesting for developers of dimensionality reduction algorithms, below.
-
-<details>
-<summary><b>Interesting modifications of the ViVAE model</b></summary>
-<br>
-
-Some additional examples of modifications to the ViVAE model are provided:
-
-* PCA initialisation or general approximation of other DR models using **imitation loss**: `tutorials/imitation.ipynb`.
-
-* Using stochastic-MDS loss with **cosine distances** in input space: `tutorials/cosine.ipynb`.
-
-</details>
+We also showcase some experimental modifications of the model that will mostly be interesting for developers of dimensionality reduction algorithms.
 
 ## Case studies
 
@@ -168,9 +204,34 @@ To explore more options for evaluating cytometry data embeddings and integrating
 
 </details>
 
+## Stability
+
+The ViVAE model is based on a variational autoencoder (VAE).
+This is a type of neural network with a comparatively high number of parameters, which are trained based on input data.
+
+It is known that the final parameters of a trained VAE can differ based on the initialisation of the network.
+As a consequence, we might see small differences between embeddings across runs if the model converges to a slightly different local optimum.
+There are multiple ways to address this and end up with a more stable model, beyond basic hyperparameter tuning (suitable learning rate, batch size, number of epochs).
+
+First, we can use determinism (as described above in *Setting up*) to reduce the amount of stochastic operations used in model training.
+
+Second, we propose the use of PCA initialisation of model, which has been used before with *t*-SNE, *UMAP* and other embedding algorithms.
+Here, we propose the use of *imitation loss*, which ensures that the VAE network first learns a parametric mapping of the data that imitates a deterministic PCA embedding, and only then optimises the ViVAE loss function.
+
+See `tutorials/imitation.ipynb` to learn how to stabilise your ViVAE model.
+
+## Using cosine distances
+
+Many domain experts differ in how they approach to problem of quantifying dissimilarities between high-dimensional data points.
+Our work relies heavily on the notion of neighbourhood ranks based on Euclidean distances.
+However, if you want to use cosine distances in the training your ViVAE model, we make that possible.
+
+See `tutorials/cosine.ipynb` to learn how to do so.
+
 ## Evaluation framework
 
-In our paper, we compare ViVAE and other DR methods in terms of local and global structure preservation using [ViScore](https://github.com/saeyslab/ViScore).
+In our paper, we compare ViVAE and other DR methods in terms of local and global structure preservation in terms of neighbourhoods, rather than distances.
+To this end, we created [ViScore](https://github.com/saeyslab/ViScore).
 The ViScore repository contains our documented [benchmarking set-up](https://github.com/saeyslab/ViScore/blob/main/benchmarking), which can be extended to other datasets and DR methods.
 This set-up includes full documentation to guide the user through the process of benchmarking or hyperparameter tuning on an HPC cluster from start to finish.
 
