@@ -1,4 +1,4 @@
-"""ViVAE: Single-cell dimensionality reduction toolkit."""
+"""ViVAE: Single-cell dimensionality reduction toolkit"""
 
 import logging
 import os

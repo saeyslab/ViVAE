@@ -15,13 +15,15 @@ limitations under the License.
 """
 
 import numpy as np
+from typing import Optional
 
 from vivae import torch
 
 class MPSDataLoader:
-    """Custom data loader for compatibility with MPS backend"""
+    """Custom data loader for compatibility with MPS backend
+    """
 
-    def __init__(self, dataset, batch_size=256, shuffle=True, random_state=None):
+    def __init__(self, dataset: np.ndarray, batch_size:int = 256, shuffle: bool = True, random_state: Optional[int] = None, clone: bool = True):
         self.dataset = torch.tensor(dataset)
         self.n = torch.tensor(dataset.shape[0], dtype=torch.int32)
 

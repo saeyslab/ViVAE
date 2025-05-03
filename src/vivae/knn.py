@@ -22,17 +22,23 @@ import numpy as np
 import pynndescent
 
 def ensure_valid_knn(n: int, knn: list) -> list:
-    """Ensure k-NNG object validity
+    """Check if k-nearest-neighbour graph object is valid
 
-    Raises `ValueError` if k-NNG object invalid.
+    A valid k-NNG object is a list of two 2-dimensional NumPy arrays, the first containing neighbour indices and the second containing distances.
+    For each row, the first index must be the row index itself and the corresponding distance (to self) must be zero.
+    If the first index is non-self due to multiple points with zero distance, the self index is moved to the first position (duplicate-correction).
+    Neighbour indices must use 0-based indexing and be (coercible to) integers.
+
+    If the k-NNG is invalid, an appropriate error is raised.
+    Otherwise, the duplicate-corrected k-NNG is returned.
 
     Args:
-        n (int): Number of points in the reference coordinate matrix.
-        knn (List): Tentative k-NNG object: list of k-nearest-neighbour indices and distances.
-
+        n (int): Total number of points.
+        knn (list): k-NNG object to check.
+    
     Returns
     -------
-        List: List of neighbour indices and distances.
+        list: Corrected k-NNG object.
     """
     if len(knn) != 2 or not isinstance(knn[0], np.ndarray) or not isinstance(knn[1], np.ndarray):
         raise ValueError("`knn` object must be a list of 2 np.ndarray objects (index matrix and distance matrix)")
@@ -58,14 +64,18 @@ def ensure_valid_knn(n: int, knn: list) -> list:
 
 
 def correct_knn_for_duplicates(knn: list) -> list:
-    """Correct k-NNG for duplicate points
+    """Correct k-nearest-neighbour graph for duplicates
 
+    In k-NNGs of data with duplicate points, a closest-neighbour index may be that of another point.
+    This function swaps the first index with the self index.
+    It does not change the graph topology.
+    
     Args:
-        knn (list): List of k-nearest-neighbour indices and distances.
-
+        knn (list): k-NNG object to correct.
+    
     Returns
     -------
-        List: `knn` without duplicates.
+        list: Corrected k-NNG object.
     """
     row_idcs = np.where([knn[0][idx, 0] != idx for idx in range(knn[0].shape[0])])[0]
     for i in row_idcs:
@@ -82,16 +92,20 @@ def make_knn(
     random_state: Optional[int] = None,
     verbose: bool = True,
 ) -> list:
-    """Construct or load a k-NNG
+    """Construct or load a k-nearest-neighbour graph
 
-    Construct a k-nearest-neighbour graph object with NN indices and coordinates.
+    This function generates a k-nearest-neighbour graph (k-NNG) object with nearest-neighbour indices and distances for a set number (`k`) of neighbours.
+    If a file path (`fname`) is provided, this function attempts to load a pre-computed k-NNG from it, otherwise it constructs a new one and saves it.
+    If no path is given, a new k-NNG object is always constructed.
+
+    The algorithm used is PyNNDescent, which is an approximate algorithm that uses a random seed.
 
     Args:
-        x (Optional[np.ndarray], optional): Point coordinates to build k-NNG on top of. Defaults to None.
-        fname (Optional[str], optional): Path to k-NNG file for saving/loading. Defaults to None.
+        x (np.ndarray, optional): Input row-wise coordinates. Defaults to None.
+        fname (str, optional): Path to k-NNG file for saving/loading. Defaults to None.
         k (int, optional): Nearest neighbour count. Defaults to 100.
-        as_tuple (bool, optional): Whether to return a tuple of NumPy arrays, instead of list. Defaults to False.
-        random_state (int, optional): Random state for PyNNDescent to make the result reproducible. Default to None.
+        as_tuple (bool, optional): Whether to return a tuple of arrays, instead of a list. Defaults to False.
+        random_state (int, optional): Random state for reproducibility. Default to None.
         verbose (bool, optional): Whether to print progress messages. Defaults to True.
 
     Returns
@@ -101,6 +115,7 @@ def make_knn(
         else:
             List: List of neighbour indices and distances.
     """
+
     if k < 1 or k > (x.shape[0] - 1):
         raise ValueError("`k` must be between 1 and (n-1)")
 
@@ -130,18 +145,22 @@ def make_knn(
 
 
 def smooth(x: np.ndarray, knn: list, k: int = 50, coef: Optional[float] = 0.1, n_iter: int = 1) -> np.ndarray:
-    """Denoise data by smoothing
+    """Denoise tabular data by smoothing
+
+    Applies the smoothing algorithm to reduce noise in tabular data.
+    Each point is moved by a factor of `coef` toward the average coordinates of its `k` nearest neighbours.
+    This is repeated for `n_iter` steps.
 
     Args:
-        x (np.ndarray): Point coordinates.
-        knn (list): List of k-nearest-neighbour indices and distances.
-        k (int, optional): Nearest neighbour count for smoothing. Defaults to 50.
-        coef (Optional[float], optional): Smoothing lambda coefficient. Defaults to 0.1.
+        x (np.ndarray): Row-wise coordinate matrix.
+        knn (list): k-nearest-neighbour graph object in list format (use `make_knn` to generate).
+        k (int, optional): Nearest neighbour count. Defaults to 50.
+        coef (float, optional): Smoothing coefficient. Defaults to 1.
         n_iter (int, optional): Number of smoothing iterations. Defaults to 1.
 
     Returns
     -------
-        np.ndarray: Smoothed point coordinates.
+        np.ndarray: Smoothed row-wise coordinate matrix.
     """
     if k < 1 or k > (x.shape[0] - 1):
         raise ValueError("`k` must be between 1 and (n-1)")

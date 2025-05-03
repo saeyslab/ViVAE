@@ -55,7 +55,6 @@ from vivae import DEVICE, torch
 
 from .geometry import jacobian, metric_tensor
 
-
 class ImitationLoss:
     """Imitation loss
 
