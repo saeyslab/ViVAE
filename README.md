@@ -44,15 +44,14 @@ For FlowSOM integration, also run
 pip install git+https://github.com/saeyslab/FlowSOM_Python
 ```
 
-In the interest of reproducibility across repeated runs, ViVAE uses deterministic algorithms where applicable and supports setting a random seed (via the `random_state` argument of the `vv.ViVAE` model constructor).
-Disabling determinism may increase performance.
-To do so, set the `VIVAE_DETERMINISTIC` environment variable to '0':
+Then you can import *ViVAE* in Python.
+Check out our tutorials (described below) or the relevant documentation (see the following code snippet) to get started.
 
 ```python
 ## In Python:
-import os
-os.environ['VIVAE_DETERMINISTIC'] = '0' # disable
-import ViVAE
+import vivae as vv
+
+help(vv.ViVAE) # documentation of the ViVAE model
 ```
 
 <hr>
