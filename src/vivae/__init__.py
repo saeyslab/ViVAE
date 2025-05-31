@@ -17,6 +17,7 @@ TRY_MPS = os.environ.get("VIVAE_MPS", default="0") != "0"
 if TRY_CUDA and torch.cuda.is_available():
     DEVICE = torch.tensor([1.0], device=torch.device("cuda")).device
     DEVICE_NAME = "cuda"
+    DETERMINISTIC = False
 elif TRY_MPS and torch.backends.mps.is_available():
     DEVICE = torch.tensor([1.0], device=torch.device("mps")).device
     DEVICE_NAME = "mps"
