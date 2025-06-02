@@ -154,6 +154,7 @@ class Autoencoder(nn.Module):
             - if `variational` is `False`: torch.tensor object
             - if `variational` is `True`: a list of 3 torch.tensor objects (`mu`, `sigma`, `z`)
         """
+        x = x.to(torch.float32)
         with torch.set_grad_enabled(not no_grad):
             enc = self.encoder(x)
             if not self.variational:
@@ -176,6 +177,7 @@ class Autoencoder(nn.Module):
         -------
             torch.tensor: Projection of `x` onto lower-dimensional manifold.
         """
+        x = x.to(torch.float32)
         enc = self.encoder(x)
         if not self.variational:
             return enc
@@ -197,6 +199,7 @@ class Autoencoder(nn.Module):
         -------
             torch.tensor: Reconstruction of original data.
         """
+        z = z.to(torch.float32)
         with torch.set_grad_enabled(not no_grad):
             z = self.decoder(z)
             return z
@@ -214,6 +217,7 @@ class Autoencoder(nn.Module):
         -------
             torch.tensor: Projection of `z` onto higher-dimensional manifold.
         """
+        z = z.to(torch.float32)
         return self.decoder(z)
 
     def forward(
