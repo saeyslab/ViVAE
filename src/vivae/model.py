@@ -128,7 +128,7 @@ class ViVAE:
         imit_error = 0.0
 
         for _, x in enumerate(self.data_loader):
-            x = x[0]
+            x = x[0].to(torch.float32)
 
             self.optimizer.zero_grad()
 
@@ -247,7 +247,7 @@ class ViVAE:
             if self.random_state is not None:
                 g.manual_seed(self.random_state)
             self.data_loader = DataLoader(
-                TensorDataset(torch.tensor(X, device=DEVICE)),
+                TensorDataset(torch.tensor(X, device=DEVICE, dtype=torch.float32)),
                 batch_size=batch_size,
                 shuffle=True,
                 generator=g,
