@@ -367,10 +367,10 @@ class ViVAE:
         self,
         X: np.ndarray,
         batch_size: int = 256,
-        radius: float = 1e-4,
-        n_steps: int = 50,
+        radius: float = 1e-3,
+        n_steps: int = 30,
         all_points: bool = False,
-        n_polygon: int = 100,
+        n_polygon: int = 200,
     ) -> EncoderIndicatome:
         """Compute encoder indicatrices
 
@@ -378,10 +378,10 @@ class ViVAE:
             model (Autoencoder): Trained Autoencoder object.
             X (np.ndarray): Input data coordiantes.
             batch_size (int, optional): Batch size for forward pass of `X` through model. Defaults to 256.
-            radius (float, optional): Hypersphere radius in ambient space. Defaults ot 1e-4.
-            n_steps (int, optional): Number of steps along each axis of latent representation to generate grid of indicatrices. Defaults to 50.
+            radius (float, optional): Hypersphere radius in ambient space. Defaults ot 1e-3.
+            n_steps (int, optional): Number of steps along each axis of latent representation to generate grid of indicatrices. Defaults to 30.
             all_points (bool, optional): Overrides `n_steps` and uses all points. Computationally intensive. Do not do this unless completely sure. Defaults to False.
-            n_polygon (int, optional): Number of points in each polygon approximating the hypersphere in ambient space. Defaults to 100.
+            n_polygon (int, optional): Number of points in each polygon approximating the hypersphere in ambient space. Defaults to 200.
 
         Returns
         -------
