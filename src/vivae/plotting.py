@@ -484,8 +484,8 @@ def plot_embedding(
 
 def plot_indicatrices(
     indicatrices: Union[EncoderIndicatome, DecoderIndicatome],
-    scale_factor: Optional[float] = None,
-    s: float = 0.05,
+    scale_factor: Optional[float] = 4e2,
+    s: float = 0.02,
     figsize: tuple[int, int] = (5, 5),
     show: bool = True,
     **kwargs,
@@ -496,8 +496,8 @@ def plot_indicatrices(
 
     Args:
         indicatrices (Union[EncoderIndicatome,DecoderIndicatome]): Set of indicatrices.
-        scale_factor (float, optional): Scaling factor for the polygons. Defaults to 1e-2 for decoder and radius^(-1) for encoder.
-        s (float, optional): Point size. Defaults to 0.05.
+        scale_factor (float, optional): Scaling factor for the polygons. If set to None, uses 1e-2 for decoder and radius^(-1) for encoder.
+        s (float, optional): Point size. Defaults to 0.02.
         figsize (Tuple[int, int], optional): Figure size. Defaults to (5,5).
         show (bool, optional): Whether to show the plot, in addition to returning the fig, ax objects. Defaults to True.
         **kwargs: Keywords arguments to `matplotlib.pyplot.scatter`.
