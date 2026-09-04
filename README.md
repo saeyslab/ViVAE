@@ -1,5 +1,7 @@
 <img src="./logo.png" alt="ViVAE" width="250"/>
 
+[![DOI](https://zenodo.org/badge/707237183.svg)](https://doi.org/10.5281/zenodo.22310523)
+
 ViVAE (*vee-vay*) is a toolkit for single-cell data denoising and dimensionality reduction.
 
 It is published together with **[ViScore](https://github.com/saeyslab/ViScore)**, a framework for fair and scalable evaluation of dimensionality reduction.
