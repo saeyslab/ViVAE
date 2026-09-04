@@ -1,6 +1,6 @@
 <img src="./logo.png" alt="ViVAE" width="250"/>
 
-[![DOI](https://zenodo.org/badge/707237183.svg)](https://doi.org/10.5281/zenodo.22310523)
+[![DOI](https://zenodo.org/badge/792489073.svg)](https://doi.org/10.5281/zenodo.22310504)
 
 ViVAE (*vee-vay*) is a toolkit for single-cell data denoising and dimensionality reduction.
 
